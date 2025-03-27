@@ -1,0 +1,10 @@
+transformers 
+datasets 
+sumy 
+nltk 
+torch 
+rouge-score 
+fastapi 
+uvicorn
+python-dotenv
+pydantic-settings
