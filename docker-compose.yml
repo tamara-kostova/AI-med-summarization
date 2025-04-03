@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /model_checkpoints:/app/model_checkpoints
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1

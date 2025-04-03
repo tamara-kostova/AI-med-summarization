@@ -1,53 +1,34 @@
-# Ignore everything by default
-*
+# Use a slim Python base image
+FROM python:3.12-slim
 
-# Explicitly allow necessary files and directories
-!app/
-!summarization/
-!requirements.txt
-!Dockerfile
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Python specifics
-__pycache__/
-*.py[cod]
-*$py.class
+# Set work directory
+WORKDIR /app
 
-# Virtual environments
-venv/
-.env
-*.venv
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Large data directories to explicitly ignore
-data/
-datasets/
-*.dataset
-*.parquet
-*.arrow
+# Copy only essential files
+COPY requirements.txt .
 
-# Hugging Face cache
-.cache/
-huggingface/
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Large model files
-model_checkpoints/
-*.pt
-*.pth
-*.bin
+# Create directories for potential data
+RUN mkdir -p /app/data /app/model_checkpoints
 
-# Logs and temporary files
-*.log
-*.tmp
+# Copy application code
+COPY app/ ./app/
+COPY summarization/ ./summarization/
 
-# IDE and editor folders
-.vscode/
-.idea/
-*.swp
-*~
+# Expose the application port
+EXPOSE 8000
 
-# Operating system files
-.DS_Store
-Thumbs.db
-
-# Git
-.git
-.gitignore
+# Default command
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

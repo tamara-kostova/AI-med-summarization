@@ -8,3 +8,8 @@ fastapi
 uvicorn
 python-dotenv
 pydantic-settings
+sentencepiece
+numpy
+pydantic
+python-multipart
+huggingface_hub
