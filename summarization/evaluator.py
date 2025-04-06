@@ -29,6 +29,15 @@ class Evaluator:
         abstractive_scores = self.evaluate_summary(
             reference_summary, abstractive_summary
         )
+        extractive_rougeL = extractive_scores["rougeL"].fmeasure
+        abstractive_rougeL = abstractive_scores["rougeL"].fmeasure
+        
+        if abstractive_rougeL > extractive_rougeL:
+            recommended = "Abstractive"
+        elif extractive_rougeL > abstractive_rougeL:
+            recommended = "Extractive"
+        else:
+            recommended = "Either (Scores Equal)"
 
         return {
             "extractive_rouge": {
@@ -41,4 +50,5 @@ class Evaluator:
                 "rouge2": abstractive_scores["rouge2"].fmeasure,
                 "rougeL": abstractive_scores["rougeL"].fmeasure,
             },
+            "recommended_method": recommended 
         }
