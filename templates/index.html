@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Summarization Tool</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Medical Summarization Tool</h1>
+        <nav>
+            <ul>
+                <li><a href="#text-tab" class="tab-link active" data-tab="text-tab">Text Summarization</a></li>
+                <li><a href="#file-tab" class="tab-link" data-tab="file-tab">PDF Summarization</a></li>
+                <li><a href="#compare-tab" class="tab-link" data-tab="compare-tab">Compare Summaries</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Text Summarization Tab -->
+        <section id="text-tab" class="tab-content active">
+            <h2>Text Summarization</h2>
+            <form id="textForm">
+                <div class="form-group">
+                    <label for="text">Enter Medical Text:</label>
+                    <textarea id="text" name="text" rows="10" placeholder="Paste medical text here (minimum 10 characters)" required></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="summary_type_text">Summarization Method:</label>
+                        <select id="summary_type_text" name="summary_type">
+                            <option value="abstractive">Abstractive (AI-generated)</option>
+                            <option value="extractive">Extractive (Key sentences)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="max_length_text">Maximum Summary Length:</label>
+                        <input type="number" id="max_length_text" name="max_length" min="50" max="1000" value="150">
+                    </div>
+                </div>
+                
+                <button type="submit" class="primary-button">Generate Summary</button>
+            </form>
+            
+            <div id="text-results" class="results" style="display:none;">
+                <h3>Summary Results</h3>
+                <div class="result-stats">
+                    <p><strong>Method:</strong> <span id="text-method"></span></p>
+                    <p><strong>Original Length:</strong> <span id="text-originalLength"></span> characters</p>
+                    <p><strong>Summary Length:</strong> <span id="text-summaryLength"></span> characters</p>
+                </div>
+                <div class="summary-content">
+                    <h4>Summary:</h4>
+                    <div id="text-summary" class="summary-box"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PDF Summarization Tab -->
+        <section id="file-tab" class="tab-content">
+            <h2>PDF Document Summarization</h2>
+            <form id="fileForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file">Upload PDF Document:</label>
+                    <input type="file" id="file" name="file" accept=".pdf" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="summary_type_file">Summarization Method:</label>
+                        <select id="summary_type_file" name="summary_type">
+                            <option value="abstractive">Abstractive (AI-generated)</option>
+                            <option value="extractive">Extractive (Key sentences)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="max_length_file">Maximum Summary Length:</label>
+                        <input type="number" id="max_length_file" name="max_length" min="50" max="1000" value="150">
+                    </div>
+                </div>
+                
+                <button type="submit" class="primary-button">Generate Summary</button>
+            </form>
+            
+            <div id="file-results" class="results" style="display:none;">
+                <h3>Summary Results</h3>
+                <div class="result-stats">
+                    <p><strong>File:</strong> <span id="file-name"></span></p>
+                    <p><strong>Method:</strong> <span id="file-method"></span></p>
+                    <p><strong>Original Length:</strong> <span id="file-originalLength"></span> characters</p>
+                    <p><strong>Summary Length:</strong> <span id="file-summaryLength"></span> characters</p>
+                </div>
+                <div class="summary-content">
+                    <h4>Summary:</h4>
+                    <div id="file-summary" class="summary-box"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Compare Summaries Tab -->
+        <section id="compare-tab" class="tab-content">
+            <h2>Compare Summary Methods</h2>
+            <form id="compareForm">
+                <div class="form-group">
+                    <label for="compare-text">Enter Medical Text:</label>
+                    <textarea id="compare-text" name="text" rows="8" placeholder="Paste medical text here (minimum 10 characters)" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reference-summary">Reference Summary (Ground Truth):</label>
+                    <textarea id="reference-summary" name="reference_summary" rows="5" placeholder="Enter a reference summary for comparison" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="max_length_compare">Maximum Summary Length:</label>
+                    <input type="number" id="max_length_compare" name="max_length" min="50" max="1000" value="150">
+                </div>
+                
+                <button type="submit" class="primary-button">Compare Methods</button>
+            </form>
+            
+            <div id="compare-results" class="results" style="display:none;">
+                <h3>Comparison Results</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-col">
+                        <h4>Extractive Summary</h4>
+                        <div class="rouge-scores">
+                            <h5>ROUGE Scores:</h5>
+                            <ul>
+                                <li>ROUGE-1: <span id="extractive-rouge1"></span></li>
+                                <li>ROUGE-2: <span id="extractive-rouge2"></span></li>
+                                <li>ROUGE-L: <span id="extractive-rougeL"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="comparison-col">
+                        <h4>Abstractive Summary</h4>
+                        <div class="rouge-scores">
+                            <h5>ROUGE Scores:</h5>
+                            <ul>
+                                <li>ROUGE-1: <span id="abstractive-rouge1"></span></li>
+                                <li>ROUGE-2: <span id="abstractive-rouge2"></span></li>
+                                <li>ROUGE-L: <span id="abstractive-rougeL"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="recommendation">
+                    <h4>Recommendation:</h4>
+                    <p>Based on ROUGE scores, the <strong><span id="recommended-method"></span></strong> method is recommended for this text.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="spinner" class="spinner"><div class="spinner-inner"></div></div>
+    
+    <footer>
+        <p>Medical Summarization API v1.0.0</p>
+        <p><a href="/docs" target="_blank">API Documentation</a></p>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

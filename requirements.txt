@@ -13,3 +13,6 @@ numpy
 pydantic
 python-multipart
 huggingface_hub
+fitz
+black
+isort

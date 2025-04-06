@@ -1,38 +1,41 @@
 import os
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi.staticfiles import StaticFiles
 
-from app.routes import router
-from services.error_handler import setup_error_handlers
+from api.routes import router
 from config.settings import Settings
+from services.error_handler import setup_error_handlers
+from summarization.evaluator import Evaluator
+from summarization.summarizer import Summarizer
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.summarizer = Summarizer()
+    app.state.evaluator = Evaluator(summarizer=app.state.summarizer)
+    yield
+
 
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
-    
+
     openapi_schema = get_openapi(
         title="Medical Summarization API",
         version="1.0.0",
-        description="""
-        ## Advanced Medical Text Summarization API
-
-        ### Features
-        - Multiple Summarization Techniques
-        - Abstractive and Extractive Summaries
-        - Performance Evaluation
-        - Multi-language Support
-        """,
         routes=app.routes,
     )
-    
-    openapi_schema["info"]["x-logo"] = {
-        "url": "https://placeholder.com/logo.png"
-    }
-    
+
+    openapi_schema["info"]["x-logo"] = {"url": "https://placeholder.com/logo.png"}
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
 
 def create_app() -> FastAPI:
     settings = Settings()
@@ -42,8 +45,11 @@ def create_app() -> FastAPI:
         description="AI-powered medical text summarization",
         version="1.0.0",
         docs_url=None,
-        redoc_url=None  
+        redoc_url=None,
+        lifespan=lifespan,
     )
+
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
     app.openapi = custom_openapi
 
@@ -52,14 +58,13 @@ def create_app() -> FastAPI:
         return get_swagger_ui_html(
             openapi_url="/openapi.json",
             title="Medical Summarization API - Docs",
-            swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png"
+            swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
         )
 
     @app.get("/redoc", include_in_schema=False)
     async def redoc_html():
         return get_redoc_html(
-            openapi_url="/openapi.json",
-            title="Medical Summarization API - ReDoc"
+            openapi_url="/openapi.json", title="Medical Summarization API - ReDoc"
         )
 
     app.add_middleware(
@@ -70,10 +75,11 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    app.include_router(router, prefix="/api/v1")
+    app.include_router(router)
 
     setup_error_handlers(app)
 
     return app
+
 
 app = create_app()

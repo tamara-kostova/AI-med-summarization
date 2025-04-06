@@ -1,0 +1,214 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab navigation
+    const tabLinks = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all tabs
+            tabLinks.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to the clicked tab
+            this.classList.add('active');
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+    
+    // Text Summarization Form
+    const textForm = document.getElementById('textForm');
+    
+    if (textForm) {
+        textForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const text = document.getElementById('text').value;
+            const summaryType = document.getElementById('summary_type_text').value;
+            const maxLength = document.getElementById('max_length_text').value;
+            
+            if (text.trim().length < 10) {
+                alert('Please enter at least 10 characters of text.');
+                return;
+            }
+            
+            showSpinner();
+            
+            try {
+                const response = await fetch(`/summarize/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        summary_type: summaryType,
+                        max_length: parseInt(maxLength)
+                    })
+                });
+                
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'An error occurred during summarization');
+                }
+                
+                const data = await response.json();
+                
+                // Display results
+                document.getElementById('text-method').textContent = data.summary_type;
+                document.getElementById('text-originalLength').textContent = data.original_length;
+                document.getElementById('text-summaryLength').textContent = data.summary_length;
+                document.getElementById('text-summary').textContent = data.summary;
+                
+                document.getElementById('text-results').style.display = 'block';
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                console.error('Error:', error);
+            } finally {
+                hideSpinner();
+            }
+        });
+    }
+    
+    // File Summarization Form
+    const fileForm = document.getElementById('fileForm');
+    
+    if (fileForm) {
+        fileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('file');
+            const summaryType = document.getElementById('summary_type_file').value;
+            const maxLength = document.getElementById('max_length_file').value;
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a PDF file to upload.');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Please upload a PDF file.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('summary_type', summaryType);
+            formData.append('max_length', maxLength);
+            
+            showSpinner();
+            
+            try {
+                const response = await fetch(`/summarize-pdf`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'An error occurred during PDF summarization');
+                }
+                
+                const data = await response.json();
+                
+                // Display results
+                document.getElementById('file-name').textContent = data.filename;
+                document.getElementById('file-method').textContent = data.summary_type;
+                document.getElementById('file-originalLength').textContent = data.original_length;
+                document.getElementById('file-summaryLength').textContent = data.summary_length;
+                document.getElementById('file-summary').textContent = data.summary;
+                
+                document.getElementById('file-results').style.display = 'block';
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                console.error('Error:', error);
+            } finally {
+                hideSpinner();
+            }
+        });
+    }
+    
+    // Compare Summaries Form
+    const compareForm = document.getElementById('compareForm');
+    
+    if (compareForm) {
+        compareForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const text = document.getElementById('compare-text').value;
+            const referenceSummary = document.getElementById('reference-summary').value;
+            const maxLength = document.getElementById('max_length_compare').value;
+            
+            if (text.trim().length < 10) {
+                alert('Please enter at least 10 characters of text.');
+                return;
+            }
+            
+            if (referenceSummary.trim().length < 10) {
+                alert('Please enter a reference summary with at least 10 characters.');
+                return;
+            }
+            
+            const requestData = {
+                text: text,
+                reference_summary: referenceSummary,
+                max_length: parseInt(maxLength),
+                summary_type: 'abstractive' // Default value, both methods will be compared
+            };
+            
+            showSpinner();
+            
+            try {
+                const response = await fetch(`/compare-summaries/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'An error occurred during summary comparison');
+                }
+                
+                const data = await response.json();
+                
+                // Display results
+                document.getElementById('extractive-rouge1').textContent = (data.extractive_rouge.rouge1 * 100).toFixed(1) + '%';
+                document.getElementById('extractive-rouge2').textContent = (data.extractive_rouge.rouge2 * 100).toFixed(1) + '%';
+                document.getElementById('extractive-rougeL').textContent = (data.extractive_rouge.rougeL * 100).toFixed(1) + '%';
+                
+                document.getElementById('abstractive-rouge1').textContent = (data.abstractive_rouge.rouge1 * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-rouge2').textContent = (data.abstractive_rouge.rouge2 * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-rougeL').textContent = (data.abstractive_rouge.rougeL * 100).toFixed(1) + '%';
+                
+                document.getElementById('recommended-method').textContent = data.recommended_method;
+                
+                document.getElementById('compare-results').style.display = 'block';
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                console.error('Error:', error);
+            } finally {
+                hideSpinner();
+            }
+        });
+    }
+    
+    // Spinner functions
+    function showSpinner() {
+        document.getElementById('spinner').style.display = 'flex';
+    }
+    
+    function hideSpinner() {
+        document.getElementById('spinner').style.display = 'none';
+    }
+});

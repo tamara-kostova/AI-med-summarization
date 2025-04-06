@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Summarization</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+</head>
+<body>
+    <h1>Document Summarization Tool</h1>
+    
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Upload PDF Document:</label>
+            <input type="file" id="file" name="file" accept=".pdf" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="summary_type">Summarization Method:</label>
+            <select id="summary_type" name="summary_type">
+                <option value="abstractive">Abstractive (AI-generated)</option>
+                <option value="extractive">Extractive (Key sentences)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="max_length">Maximum Summary Length:</label>
+            <input type="number" id="max_length" name="max_length" min="50" max="1000" value="150">
+        </div>
+        
+        <button type="submit">Generate Summary</button>
+    </form>
+    
+    <div id="spinner" class="spinner"></div>
+    
+    <div id="results" class="results" style="display:none;">
+        <h2>Summary</h2>
+        <p><strong>Method:</strong> <span id="method"></span></p>
+        <p><strong>Original Length:</strong> <span id="originalLength"></span> characters</p>
+        <p><strong>Summary Length:</strong> <span id="summaryLength"></span> characters</p>
+        <div id="summary"></div>
+    </div>
+    
+    <script src="{{ url_for('static', path='/js/upload.js') }}"></script>
+</body>
+</html>
