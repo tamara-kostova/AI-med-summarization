@@ -18,12 +18,22 @@ class Evaluator:
         """Evaluate a generated summary against a reference"""
         return self.scorer.score(reference, generated)
 
-    def compare_summaries(self, text: str, reference_summary: str):
+    def compare_summaries(
+        self,
+        text: str,
+        reference_summary: str,
+        extractive_model: str = "bert",
+        abstractive_model: str = "t5-small",
+    ):
         """Compare extractive and abstractive summaries using ROUGE"""
         text = text[:2048]
 
-        extractive_summary = self.summarizer.generate_extractive_summary(text)
-        abstractive_summary = self.summarizer.generate_abstractive_summary(text)
+        extractive_summary = self.summarizer.generate_summary(
+            text, summary_type="extractive", model_name=extractive_model
+        )
+        abstractive_summary = self.summarizer.generate_summary(
+            text, summary_type="abstractive", model_name=abstractive_model
+        )
 
         extractive_scores = self.evaluate_summary(reference_summary, extractive_summary)
         abstractive_scores = self.evaluate_summary(
@@ -31,7 +41,7 @@ class Evaluator:
         )
         extractive_rougeL = extractive_scores["rougeL"].fmeasure
         abstractive_rougeL = abstractive_scores["rougeL"].fmeasure
-        
+
         if abstractive_rougeL > extractive_rougeL:
             recommended = "Abstractive"
         elif extractive_rougeL > abstractive_rougeL:
@@ -50,5 +60,5 @@ class Evaluator:
                 "rouge2": abstractive_scores["rouge2"].fmeasure,
                 "rougeL": abstractive_scores["rougeL"].fmeasure,
             },
-            "recommended_method": recommended 
+            "recommended_method": recommended,
         }

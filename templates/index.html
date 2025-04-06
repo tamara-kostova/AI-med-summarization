@@ -36,6 +36,19 @@
                             <option value="extractive">Extractive (Key sentences)</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="model_text">Model:</label>
+                        <select id="model_text" name="model">
+                            <optgroup label="Abstractive">
+                                <option value="t5-small">T5-SMALL</option>
+                                <option value="bart">BART</option>
+                            </optgroup>
+                            <optgroup label="Extractive">
+                                <option value="bert">BERT</option>
+                                <option value="textrank">TextRank</option>
+                            </optgroup>
+                        </select>
+                    </div>
                     
                     <div class="form-group">
                         <label for="max_length_text">Maximum Summary Length:</label>
@@ -77,6 +90,20 @@
                             <option value="extractive">Extractive (Key sentences)</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label for="model_file">Model:</label>
+                        <select id="model_file" name="model">
+                            <optgroup label="Abstractive">
+                                <option value="t5-small">T5-SMALL</option>
+                                <option value="bart">BERT</option>
+                            </optgroup>
+                            <optgroup label="Extractive">
+                                <option value="bert">BERT</option>
+                                <option value="textrank">TextRank</option>
+                            </optgroup>
+                        </select>
+                    </div>
                     
                     <div class="form-group">
                         <label for="max_length_file">Maximum Summary Length:</label>
@@ -115,6 +142,24 @@
                     <label for="reference-summary">Reference Summary (Ground Truth):</label>
                     <textarea id="reference-summary" name="reference_summary" rows="5" placeholder="Enter a reference summary for comparison" required></textarea>
                 </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="extractive_model">Extractive Model:</label>
+                        <select id="extractive_model" name="extractive_model">
+                            <option value="bert">BERT</option>
+                            <option value="textrank">TextRank</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="abstractive_model">Abstractive Model:</label>
+                        <select id="abstractive_model" name="abstractive_model">
+                            <option value="t5-small">T5-SMALL</option>
+                            <option value="bart">BART</option>
+                        </select>
+                    </div>
+                </div>
                 
                 <div class="form-group">
                     <label for="max_length_compare">Maximum Summary Length:</label>
@@ -128,7 +173,7 @@
                 <h3>Comparison Results</h3>
                 <div class="comparison-grid">
                     <div class="comparison-col">
-                        <h4>Extractive Summary</h4>
+                        <h4>Extractive Summary (<span id="extractive-model-used"></span>)</h4>
                         <div class="rouge-scores">
                             <h5>ROUGE Scores:</h5>
                             <ul>
@@ -139,7 +184,7 @@
                         </div>
                     </div>
                     <div class="comparison-col">
-                        <h4>Abstractive Summary</h4>
+                        <h4>Abstractive Summary(<span id="abstractive-model-used"></span>)</h4>
                         <div class="rouge-scores">
                             <h5>ROUGE Scores:</h5>
                             <ul>

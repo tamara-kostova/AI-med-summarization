@@ -17,6 +17,35 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById(tabId).classList.add('active');
         });
     });
+
+    function handleMethodChange(summaryTypeSelect, modelSelect) {
+        const method = summaryTypeSelect.value;
+        const abstractiveOptGroup = modelSelect.querySelector('optgroup[label="Abstractive"]');
+        const extractiveOptGroup = modelSelect.querySelector('optgroup[label="Extractive"]');
+    
+        if (method === 'abstractive') {
+            abstractiveOptGroup.style.display = 'block';
+            extractiveOptGroup.style.display = 'none';
+            // Reset to default abstractive model
+            modelSelect.value = 't5-small';
+        } else {
+            abstractiveOptGroup.style.display = 'none';
+            extractiveOptGroup.style.display = 'block';
+            // Reset to default extractive model
+            modelSelect.value = 'bert';
+        }
+    }
+
+    const textMethodSelect = document.getElementById('summary_type_text');
+    const textModelSelect = document.getElementById('model_text');
+    const fileMethodSelect = document.getElementById('summary_type_file');
+    const fileModelSelect = document.getElementById('model_file');
+
+    handleMethodChange(textMethodSelect, textModelSelect);
+    handleMethodChange(fileMethodSelect, fileModelSelect);
+
+    textMethodSelect.addEventListener('change', () => handleMethodChange(textMethodSelect, textModelSelect));
+    fileMethodSelect.addEventListener('change', () => handleMethodChange(fileMethodSelect, fileModelSelect));
     
     // Text Summarization Form
     const textForm = document.getElementById('textForm');
@@ -27,6 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const text = document.getElementById('text').value;
             const summaryType = document.getElementById('summary_type_text').value;
+            const model = document.getElementById("model_text").value;
             const maxLength = document.getElementById('max_length_text').value;
             
             if (text.trim().length < 10) {
@@ -45,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({
                         text: text,
                         summary_type: summaryType,
+                        model: model,
                         max_length: parseInt(maxLength)
                     })
                 });
@@ -83,6 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const fileInput = document.getElementById('file');
             const summaryType = document.getElementById('summary_type_file').value;
+            const model = document.getElementById('model_file').value;
             const maxLength = document.getElementById('max_length_file').value;
             
             if (!fileInput.files || fileInput.files.length === 0) {
@@ -100,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('summary_type', summaryType);
+            formData.append('model', model);
             formData.append('max_length', maxLength);
             
             showSpinner();
@@ -145,6 +178,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const text = document.getElementById('compare-text').value;
             const referenceSummary = document.getElementById('reference-summary').value;
             const maxLength = document.getElementById('max_length_compare').value;
+            const extractiveModel = document.getElementById('extractive_model').value;
+            const abstractiveModel = document.getElementById('abstractive_model').value;
             
             if (text.trim().length < 10) {
                 alert('Please enter at least 10 characters of text.');
@@ -160,7 +195,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 text: text,
                 reference_summary: referenceSummary,
                 max_length: parseInt(maxLength),
-                summary_type: 'abstractive' // Default value, both methods will be compared
+                summary_type: 'abstractive',
+                extractive_model: extractiveModel,
+                abstractive_model: abstractiveModel
             };
             
             showSpinner();
@@ -189,6 +226,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('abstractive-rouge1').textContent = (data.abstractive_rouge.rouge1 * 100).toFixed(1) + '%';
                 document.getElementById('abstractive-rouge2').textContent = (data.abstractive_rouge.rouge2 * 100).toFixed(1) + '%';
                 document.getElementById('abstractive-rougeL').textContent = (data.abstractive_rouge.rougeL * 100).toFixed(1) + '%';
+
+                document.getElementById('extractive-model-used').textContent = requestData.extractive_model;
+                document.getElementById('abstractive-model-used').textContent = requestData.abstractive_model;
                 
                 document.getElementById('recommended-method').textContent = data.recommended_method;
                 

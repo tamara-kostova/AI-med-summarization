@@ -1,6 +1,6 @@
 import logging
 
-import fitz
+import pymupdf
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ def split_text_into_chunks(text, max_words=1000):
 def extract_text_from_pdf(file_content: bytes) -> str:
     """Extract text content from PDF bytes"""
     try:
-        doc = fitz.open(stream=file_content, filetype="pdf")
+        doc = pymupdf.open(stream=file_content, filetype="pdf")
         text = ""
         for page in doc:
             text += page.get_text()

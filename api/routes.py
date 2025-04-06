@@ -5,7 +5,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from api.deps import get_evaluator, get_summarizer
-from api.response import SummaryComparisonRequest, SummaryResponse, TextSummaryRequest
+from api.request import SummaryComparisonRequest, TextSummaryRequest
+from api.response import SummaryResponse
 from summarization.evaluator import Evaluator
 from summarization.summarizer import Summarizer
 from summarization.utils import extract_text_from_pdf
@@ -34,6 +35,7 @@ async def summarize_pdf(
     summarizer: Summarizer = Depends(get_summarizer),
     file: UploadFile = File(...),
     summary_type: str = Form(default="abstractive"),
+    model: str = Form(default="t5-small"),
 ):
     """
     Generate a summary from PDF content
@@ -48,7 +50,7 @@ async def summarize_pdf(
 
     try:
         file_bytes = await file.read()
-        summary = summarizer.generate_pdf_summary(file_bytes, summary_type)
+        summary = summarizer.generate_pdf_summary(file_bytes, summary_type, model)
 
         text = extract_text_from_pdf(file_bytes)
 
@@ -78,10 +80,12 @@ async def summarize(
 
     - **text**: Input text to summarize
     - **summary_type**: Choose between 'abstractive' or 'extractive' summarization
+    - **model**: Choose a model for the summarization
     - **max_length**: Control the maximum length of the summary
     """
     text = request_data.text
     summary_type = request_data.summary_type
+    model = request_data.model
     max_length = request_data.max_length
     logger.info(f"Summarizing text using {summary_type} method")
 
@@ -99,10 +103,9 @@ async def summarize(
         )
 
     try:
-        if summary_type == "abstractive":
-            summary = summarizer.generate_abstractive_summary(text)
-        else:
-            summary = summarizer.generate_extractive_summary(text, max_length // 50)
+        summary = summarizer.generate_summary(
+            text, summary_type, model, max_length // 50
+        )
 
         return SummaryResponse(
             summary=summary,
@@ -130,7 +133,12 @@ async def evaluate_summaries(
     """
     try:
         logger.info("Comparing summary methods")
-        results = evaluator.compare_summaries(request.text, request.reference_summary)
+        results = evaluator.compare_summaries(
+            request.text,
+            request.reference_summary,
+            extractive_model=request.extractive_model,
+            abstractive_model=request.abstractive_model,
+        )
         return results
     except Exception as e:
         logger.error(f"Summary comparison error: {e}")
