@@ -13,6 +13,7 @@ class Evaluator:
         self.scorer = rouge_scorer.RougeScorer(
             ["rouge1", "rouge2", "rougeL"], use_stemmer=True
         )
+        print(f"Initialized evaluator")
 
     def evaluate_summary(self, reference: str, generated: str):
         """Evaluate a generated summary against a reference"""

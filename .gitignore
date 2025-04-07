@@ -162,4 +162,5 @@ cython_debug/
 #.idea/
 secrets.env
 model_checkpoints/
+model_checkpoints_bart/
 data/

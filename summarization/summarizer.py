@@ -24,6 +24,7 @@ class Summarizer:
             ),
             "bart": BartSummarizer(),
         }
+        print(f"Initialized summarizer")
 
     def generate_summary(
         self,

@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+import os
 
 from transformers import AutoTokenizer, pipeline
 
@@ -13,24 +14,39 @@ logger = logging.getLogger(__name__)
 class BartSummarizer(AbstractiveSummarizer):
     def __init__(
         self,
-        model_name="facebook/bart-large-cnn",
+        base_dir="./model_checkpoints_bart",
+        default_model="facebook/bart-large-cnn",
         extractive_summarizer: ExtractiveSummarizer = TextRankerSummarizer(),
         max_input_length=1024  
     ):
-        self.model_name = model_name
+        self.base_dir = base_dir
+        self.default_model = default_model
         self.max_input_length = max_input_length
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = pipeline(
-            "summarization", model=model_name, tokenizer=self.tokenizer, device=-1
-        )
         self.extractive_summarizer = extractive_summarizer
+
+    @staticmethod
+    def get_latest_model(base_dir="./model_checkpoints_bart"):
+        """Find the most recently trained BART model"""
+        if not os.path.exists(base_dir):
+            logger.warning("No trained model found, using 'facebook/bart-large-cnn'.")
+            return "facebook/bart-large-cnn"
+
+        model_dirs = [
+            os.path.join(base_dir, d)
+            for d in os.listdir(base_dir)
+            if os.path.isdir(os.path.join(base_dir, d))
+        ]
+        return max(model_dirs, key=os.path.getmtime) if model_dirs else "facebook/bart-large-cnn"
 
     @lru_cache(maxsize=1)
     def _load_model(self):
+        model_path = self.get_latest_model(self.base_dir)
+        logger.info(f"Loading BART model from: {model_path}")
+        tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
         return pipeline(
             "summarization",
-            model=self.model_name,
-            tokenizer=AutoTokenizer.from_pretrained(self.model_name),
+            model=model_path,
+            tokenizer=tokenizer,
             device=-1
         )
 
@@ -50,12 +66,13 @@ class BartSummarizer(AbstractiveSummarizer):
                 )
                 return self.generate_abstractive_summary(extractive)
 
-            inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=self.max_input_length)
+            tokenizer = AutoTokenizer.from_pretrained(self.get_latest_model(self.base_dir))
+            inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=self.max_input_length)
             input_length = len(inputs["input_ids"][0])
 
             if input_length > self.max_input_length:
                 logger.warning(f"Input text too long, truncating to {self.max_input_length} tokens")
-                text = self.tokenizer.decode(inputs["input_ids"][0][:self.max_input_length], skip_special_tokens=True)
+                text = tokenizer.decode(inputs["input_ids"][0][:self.max_input_length], skip_special_tokens=True)
 
             summarizer = self._load_model()
 
