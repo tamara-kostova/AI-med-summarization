@@ -51,10 +51,26 @@ class T5AbstractiveSummarizer(AbstractiveSummarizer):
         """Generate abstractive summary using the latest fine-tuned model"""
         try:
             summarizer = self.load_abstractive_model()
+            tokenizer = summarizer.tokenizer
+            inputs = tokenizer(
+                text,
+                return_tensors="pt",
+                max_length=512,
+                truncation=True
+            )
+            input_ids = inputs["input_ids"]
+
+            if input_ids.shape[1] > 512:
+                logger.warning("Text too long even after truncation")
+
             if len(text.split()) < 10:
                 logger.warning("Text too short for abstractive summarization")
                 return text
-
+            tokenizer = summarizer.tokenizer
+            tokens = tokenizer.encode(text)
+            if len(tokens) > 512:
+                logger.info(f"Text exceeds model's token limit ({len(tokens)} > 512). Truncating...")
+                text = tokenizer.decode(tokens[:512], skip_special_tokens=True)
             summary = summarizer(
                 text,
                 max_length=max_length,
@@ -76,7 +92,21 @@ class T5AbstractiveSummarizer(AbstractiveSummarizer):
             extractive = self.extractive_summarizer.generate_extractive_summary(
                 text, num_sentences_per_chunk=5
             )
-            return self.generate_abstractive_summary_chunk(extractive)
+            if len(extractive.split()) > 300:
+                chunks = split_text_into_chunks(extractive, 250)
+                chunk_summaries = []
+                for chunk in chunks:
+                    try:
+                        summary = self.generate_abstractive_summary_chunk(chunk)
+                        chunk_summaries.append(summary)
+                    except Exception as e:
+                        logger.error(f"Chunk summarization failed: {e}")
+                combined = " ".join(chunk_summaries)
+                if len(combined.split()) > 300:
+                    return self.generate_abstractive_summary_chunk(combined)
+                return combined
+            else:
+                return self.generate_abstractive_summary_chunk(extractive)
 
         logger.info("Text is short; using 2-chunk abstractive summarization")
         chunk_summaries = []

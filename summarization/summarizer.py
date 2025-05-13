@@ -2,6 +2,8 @@ import logging
 
 from summarization.abstractive.abstractive_summarizer import AbstractiveSummarizer
 from summarization.abstractive.bart import BartSummarizer
+from summarization.abstractive.distilbart import DistilBARTSummarizer
+from summarization.abstractive.llama import LLamaSummarizer
 from summarization.abstractive.t5 import T5AbstractiveSummarizer
 from summarization.extractive.bert import BertSummarizer
 from summarization.extractive.extractive_summarizer import ExtractiveSummarizer
@@ -23,8 +25,10 @@ class Summarizer:
                 extractive_summarizer=TextRankerSummarizer()
             ),
             "bart": BartSummarizer(),
+            "distilbart": DistilBARTSummarizer()
+            # "llama": LLamaSummarizer()
         }
-        print(f"Initialized summarizer")
+        logger.info(f"Initialized summarizer")
 
     def generate_summary(
         self,
@@ -34,7 +38,7 @@ class Summarizer:
         max_length: int = 150,
     ) -> str:
         """Generate summary from PDF file content based on specified summary type"""
-        logger.info(f"Generating {summary_type} summary")
+        logger.info(f"Generating {summary_type} summary with {model_name} model")
 
         if summary_type.lower() == "extractive":
             extractive_summarizer: ExtractiveSummarizer = self.extractive_models.get(
@@ -54,7 +58,7 @@ class Summarizer:
         max_length: int = 150,
     ) -> str:
         """Generate summary from PDF file content based on specified summary type"""
-        logger.info(f"Generating {summary_type} summary for PDF")
+        logger.info(f"Generating {summary_type} summary for PDF with {model_name} model")
 
         text = extract_text_from_pdf(file_content=file_bytes)
 

@@ -17,3 +17,5 @@ PyMuPDF
 black
 isort
 bert-extractive-summarizer
+peft
+bitsandbytes
