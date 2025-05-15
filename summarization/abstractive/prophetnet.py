@@ -10,42 +10,42 @@ from summarization.extractive.textrank import TextRankerSummarizer
 
 logger = logging.getLogger(__name__)
 
-class DistilBARTSummarizer(AbstractiveSummarizer):
+class ProphetNetSummarizer(AbstractiveSummarizer):
     """
-    DistilBART CNN Summarizer with 306M parameters (smaller than BART)
+    ProphetNet Summarizer
     """
     def __init__(
         self,
-        base_dir="model_checkpoints_bart",
-        model_name="sshleifer/distilbart-cnn-6-6",
+        base_dir="model_checkpoints_prophetnet",
+        default_model="microsoft/prophetnet-large-uncased",
         extractive_summarizer: ExtractiveSummarizer = TextRankerSummarizer(),
         max_input_length=1024  
     ):
         self.base_dir = base_dir
-        self.model_name = model_name
+        self.default_model = default_model
         self.extractive_summarizer = extractive_summarizer
         self._model = None
-        self._tokenizer = None
         self.max_input_length = max_input_length
+        self._tokenizer = None
 
     @staticmethod
-    def get_latest_model(base_dir="model_checkpoints_bart"):
-        """Find the most recently trained DistilBART model"""
+    def get_latest_model(base_dir="model_checkpoints_prophetnet"):
+        """Find the most recently trained ProphetNet model"""
         if not os.path.exists(base_dir):
-            logger.warning("No trained model found, using 'sshleifer/distilbart-cnn-6-6'.")
-            return "sshleifer/distilbart-cnn-6-6"
+            logger.warning("No trained model found, using 'microsoft/prophetnet-large-uncased'.")
+            return "microsoft/prophetnet-large-uncased"
 
         model_dirs = [
             os.path.join(base_dir, d)
             for d in os.listdir(base_dir)
-            if os.path.isdir(os.path.join(base_dir, d)) and "distilbart" in d
+            if os.path.isdir(os.path.join(base_dir, d))
         ]
-        return max(model_dirs, key=os.path.getmtime) if model_dirs else "sshleifer/distilbart-cnn-6-6"
+        return max(model_dirs, key=os.path.getmtime) if model_dirs else "microsoft/prophetnet-large-uncased"
 
     @lru_cache(maxsize=1)
     def _load_model(self):
         model_path = self.get_latest_model(self.base_dir)
-        logger.info(f"Loading DistilBART model from: {model_path}")
+        logger.info(f"Loading ProphetNet model from: {model_path}")
         tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
         return pipeline(
             "summarization",
@@ -55,26 +55,18 @@ class DistilBARTSummarizer(AbstractiveSummarizer):
         )
 
     def generate_abstractive_summary(self, text: str, max_length: int = 150) -> str:
-        """Generate an abstractive summary using the DistilBART model"""
+        """Generate an abstractive summary using the ProphetNet model"""
         try:
-            logger.info(f"Input text length: {len(text.split())} words")
-            if not text.strip():
-                logger.warning("Empty text received for summarization")
-                return ""
-            if len(text.split()) < 10:
-                logger.warning("Text too short for abstractive summarization")
+            if len(text.strip()) < 30:
+                logger.warning("Text too short for summarization")
                 return text
 
-            if self.extractive_summarizer and len(text.split()) > 1000:
-                extractive = self.extractive_summarizer.generate_extractive_summary(
-                    text
-                )
-                return self.generate_abstractive_summary(extractive)
-
+            self._load_model()
+            
             tokenizer = AutoTokenizer.from_pretrained(self.get_latest_model(self.base_dir))
             inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=self.max_input_length)
             input_length = len(inputs["input_ids"][0])
-
+            
             if input_length > self.max_input_length:
                 logger.warning(f"Input text too long, truncating to {self.max_input_length} tokens")
                 text = tokenizer.decode(inputs["input_ids"][0][:self.max_input_length], skip_special_tokens=True)
@@ -95,7 +87,7 @@ class DistilBARTSummarizer(AbstractiveSummarizer):
             
             return summary[0]["summary_text"]
         except Exception as e:
-            logger.error(f"DistilBART summarization error: {e}")
+            logger.error(f"ProphetNet summarization error: {e}")
             raise
             
     def _chunked_summarization(self, words):
@@ -126,6 +118,7 @@ class DistilBARTSummarizer(AbstractiveSummarizer):
         
         combined = " ".join(chunk_summaries)
         
+        # If the combined summaries are still long, re-summarize
         if len(combined.split()) > 600:
             logger.info("Re-summarizing the combined chunk summaries")
             try:

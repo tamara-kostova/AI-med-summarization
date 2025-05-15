@@ -4,9 +4,13 @@ from summarization.abstractive.abstractive_summarizer import AbstractiveSummariz
 from summarization.abstractive.bart import BartSummarizer
 from summarization.abstractive.distilbart import DistilBARTSummarizer
 from summarization.abstractive.llama import LLamaSummarizer
+from summarization.abstractive.prophetnet import ProphetNetSummarizer
 from summarization.abstractive.t5 import T5AbstractiveSummarizer
 from summarization.extractive.bert import BertSummarizer
 from summarization.extractive.extractive_summarizer import ExtractiveSummarizer
+from summarization.extractive.lexrank import LexRankSummarizer
+from summarization.extractive.lsa import LSASummarizer
+from summarization.extractive.sumarrnet import SummaRuNNerSummarizer
 from summarization.extractive.textrank import TextRankerSummarizer
 from summarization.utils import extract_text_from_pdf
 
@@ -19,13 +23,17 @@ class Summarizer:
         self.extractive_models = {
             "textrank": TextRankerSummarizer(),
             "bert": BertSummarizer(),
+            "lexrank": LexRankSummarizer(),
+            "summarunner": SummaRuNNerSummarizer(),
+            "lsa": LSASummarizer()
         }
         self.abstractive_models = {
             "t5-small": T5AbstractiveSummarizer(
                 extractive_summarizer=TextRankerSummarizer()
             ),
             "bart": BartSummarizer(),
-            "distilbart": DistilBARTSummarizer()
+            "distilbart": DistilBARTSummarizer(),
+            "prophetnet": ProphetNetSummarizer()
             # "llama": LLamaSummarizer()
         }
         logger.info(f"Initialized summarizer")
