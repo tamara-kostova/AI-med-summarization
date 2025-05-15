@@ -4,15 +4,15 @@ from datetime import datetime
 import aiohttp
 from datasets import load_dataset
 from transformers import (
+    AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
+    AutoTokenizer,
+    BartForConditionalGeneration,
+    BartTokenizer,
     T5ForConditionalGeneration,
     T5Tokenizer,
     Trainer,
     TrainingArguments,
-    BartForConditionalGeneration, 
-    BartTokenizer,
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    AutoModelForSeq2SeqLM
 )
 
 
@@ -90,12 +90,16 @@ def train_t5_model(
     return model_output_dir
 
 
-def train_bart(model_name="facebook/bart-base", output_dir="./model_checkpoints_bart", num_epochs=3):
+def train_bart(
+    model_name="facebook/bart-base", output_dir="./model_checkpoints_bart", num_epochs=3
+):
     """
     Train a BART model
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    model_output_dir = os.path.join(output_dir, f"{model_name.split('/')[-1]}_{timestamp}")
+    model_output_dir = os.path.join(
+        output_dir, f"{model_name.split('/')[-1]}_{timestamp}"
+    )
     os.makedirs(model_output_dir, exist_ok=True)
 
     dataset = load_dataset(
@@ -117,16 +121,10 @@ def train_bart(model_name="facebook/bart-base", output_dir="./model_checkpoints_
     def preprocess_data(examples):
         inputs = examples["article"]
         model_inputs = tokenizer(
-            inputs, 
-            max_length=512,
-            truncation=True, 
-            padding="max_length"
+            inputs, max_length=512, truncation=True, padding="max_length"
         )
         labels = tokenizer(
-            examples["abstract"], 
-            max_length=128,
-            truncation=True, 
-            padding="max_length"
+            examples["abstract"], max_length=128, truncation=True, padding="max_length"
         )
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
@@ -150,7 +148,7 @@ def train_bart(model_name="facebook/bart-base", output_dir="./model_checkpoints_
         gradient_accumulation_steps=2,
         gradient_checkpointing=True,
         group_by_length=True,
-        fp16_full_eval=True, 
+        fp16_full_eval=True,
         dataloader_pin_memory=False,
         dataloader_num_workers=0,
         logging_steps=100,
@@ -172,30 +170,31 @@ def train_bart(model_name="facebook/bart-base", output_dir="./model_checkpoints_
 
 
 def train_llama(
-    model_name = "openlm-research/open_llama_3b_v2",
-    output_dir="./model_checkpoints_llama"):
-    
+    model_name="openlm-research/open_llama_3b_v2",
+    output_dir="./model_checkpoints_llama",
+):
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_output_dir = os.path.join(output_dir, f"llama_summarizer_{timestamp}")
     os.makedirs(model_output_dir, exist_ok=True)
-    
+
     from transformers import BitsAndBytesConfig
-    
+
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_use_double_quant=True,
         bnb_4bit_quant_type="nf4",
     )
-    
+
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         quantization_config=bnb_config,
         device_map="auto",
-        trust_remote_code=True
+        trust_remote_code=True,
     )
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     dataset = load_dataset(
         "scientific_papers",
         "pubmed",
@@ -203,7 +202,7 @@ def train_llama(
         trust_remote_code=True,
     )
     train_dataset, eval_dataset = dataset
-    
+
     def format_for_llama(doc, summary):
         return f"""### Instruction: Summarize the following scientific article.
 
@@ -212,51 +211,51 @@ def train_llama(
 
     ### Response:
     {summary}"""
-    
+
     def preprocess_data(examples):
         formatted_text = [
-            format_for_llama(doc, summary) 
+            format_for_llama(doc, summary)
             for doc, summary in zip(examples["article"], examples["abstract"])
         ]
-        
+
         encodings = tokenizer(
-            formatted_text, 
+            formatted_text,
             truncation=True,
             max_length=1024,
             padding="max_length",
-            return_tensors="pt"
+            return_tensors="pt",
         )
-        
+
         encodings["labels"] = encodings["input_ids"].clone()
-        
+
         return encodings
-    
+
     tokenized_train = train_dataset.map(
-        preprocess_data, 
+        preprocess_data,
         batched=True,
         remove_columns=train_dataset.column_names,
     )
-    
+
     tokenized_val = eval_dataset.map(
-        preprocess_data, 
+        preprocess_data,
         batched=True,
         remove_columns=eval_dataset.column_names,
     )
-    
+
     from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-    
+
     peft_config = LoraConfig(
         r=16,  # Rank
         lora_alpha=32,
         lora_dropout=0.05,
         bias="none",
         task_type="CAUSAL_LM",
-        target_modules=["q_proj", "v_proj", "k_proj", "o_proj"]
+        target_modules=["q_proj", "v_proj", "k_proj", "o_proj"],
     )
-    
+
     model = prepare_model_for_kbit_training(model)
     model = get_peft_model(model, peft_config)
-    
+
     training_args = TrainingArguments(
         output_dir=model_output_dir,
         per_device_train_batch_size=1,
@@ -272,26 +271,27 @@ def train_llama(
         save_total_limit=2,
         fp16=True,
     )
-    
+
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=tokenized_train,
         eval_dataset=tokenized_val,
     )
-    
+
     trainer.train()
-    
+
     model.save_pretrained(model_output_dir)
     tokenizer.save_pretrained(model_output_dir)
-    
+
     print(f"Llama model fine-tuned and saved to: {model_output_dir}")
     return model_output_dir
 
+
 def train_distilbart(
-    model_name="sshleifer/distilbart-cnn-6-6", 
-    output_dir="./model_checkpoints_bart", 
-    num_epochs=2
+    model_name="sshleifer/distilbart-cnn-6-6",
+    output_dir="./model_checkpoints_bart",
+    num_epochs=2,
 ):
     """
     Train a DistilBART model (306M parameters, distilled from 400M BART)
@@ -319,16 +319,13 @@ def train_distilbart(
     def preprocess_data(examples):
         inputs = examples["article"]
         model_inputs = tokenizer(
-            inputs, 
-            max_length=384,
-            truncation=True, 
-            padding="max_length"
+            inputs, max_length=384, truncation=True, padding="max_length"
         )
         labels = tokenizer(
-            examples["highlights"], 
+            examples["highlights"],
             max_length=128,
-            truncation=True, 
-            padding="max_length"
+            truncation=True,
+            padding="max_length",
         )
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
@@ -370,10 +367,11 @@ def train_distilbart(
     print(f"DistilBART model trained and saved to: {model_output_dir}")
     return model_output_dir
 
+
 def train_prophetnet_small(
-    model_name="microsoft/prophetnet-large-uncased", 
-    output_dir="./model_checkpoints_prophetnet", 
-    num_epochs=2
+    model_name="microsoft/prophetnet-large-uncased",
+    output_dir="./model_checkpoints_prophetnet",
+    num_epochs=2,
 ):
     """
     Train a ProphetNet model for summarization
@@ -381,7 +379,7 @@ def train_prophetnet_small(
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_output_dir = os.path.join(output_dir, f"prophetnet_small_{timestamp}")
     os.makedirs(model_output_dir, exist_ok=True)
-    
+
     dataset = load_dataset(
         "cnn_dailymail",
         "3.0.0",
@@ -391,41 +389,38 @@ def train_prophetnet_small(
         download_mode="reuse_dataset_if_exists",
     )
     train_dataset, eval_dataset = dataset
-    
+
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    
+
     def preprocess_data(examples):
         inputs = examples["article"]
         model_inputs = tokenizer(
-            inputs, 
-            max_length=384, 
-            truncation=True, 
-            padding="max_length"
+            inputs, max_length=384, truncation=True, padding="max_length"
         )
-        
+
         labels = tokenizer(
-            examples["highlights"], 
-            max_length=128, 
-            truncation=True, 
-            padding="max_length"
+            examples["highlights"],
+            max_length=128,
+            truncation=True,
+            padding="max_length",
         )
-        
+
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
-    
+
     tokenized_train = train_dataset.map(
-        preprocess_data, 
+        preprocess_data,
         batched=True,
         remove_columns=train_dataset.column_names,
     )
-    
+
     tokenized_val = eval_dataset.map(
-        preprocess_data, 
+        preprocess_data,
         batched=True,
         remove_columns=eval_dataset.column_names,
     )
-    
+
     training_args = TrainingArguments(
         output_dir=model_output_dir,
         per_device_train_batch_size=2,
@@ -441,21 +436,22 @@ def train_prophetnet_small(
         gradient_checkpointing=True,
         optim="adafactor",
     )
-    
+
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=tokenized_train,
         eval_dataset=tokenized_val,
     )
-    
+
     trainer.train()
-    
+
     model.save_pretrained(model_output_dir)
     tokenizer.save_pretrained(model_output_dir)
-    
+
     print(f"ProphetNet small model fine-tuned and saved to: {model_output_dir}")
     return model_output_dir
+
 
 if __name__ == "__main__":
     train_prophetnet_small()

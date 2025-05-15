@@ -53,10 +53,7 @@ class T5AbstractiveSummarizer(AbstractiveSummarizer):
             summarizer = self.load_abstractive_model()
             tokenizer = summarizer.tokenizer
             inputs = tokenizer(
-                text,
-                return_tensors="pt",
-                max_length=512,
-                truncation=True
+                text, return_tensors="pt", max_length=512, truncation=True
             )
             input_ids = inputs["input_ids"]
 
@@ -69,7 +66,9 @@ class T5AbstractiveSummarizer(AbstractiveSummarizer):
             tokenizer = summarizer.tokenizer
             tokens = tokenizer.encode(text)
             if len(tokens) > 512:
-                logger.info(f"Text exceeds model's token limit ({len(tokens)} > 512). Truncating...")
+                logger.info(
+                    f"Text exceeds model's token limit ({len(tokens)} > 512). Truncating..."
+                )
                 text = tokenizer.decode(tokens[:512], skip_special_tokens=True)
             summary = summarizer(
                 text,

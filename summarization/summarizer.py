@@ -25,7 +25,7 @@ class Summarizer:
             "bert": BertSummarizer(),
             "lexrank": LexRankSummarizer(),
             "summarunner": SummaRuNNerSummarizer(),
-            "lsa": LSASummarizer()
+            "lsa": LSASummarizer(),
         }
         self.abstractive_models = {
             "t5-small": T5AbstractiveSummarizer(
@@ -33,7 +33,7 @@ class Summarizer:
             ),
             "bart": BartSummarizer(),
             "distilbart": DistilBARTSummarizer(),
-            "prophetnet": ProphetNetSummarizer()
+            "prophetnet": ProphetNetSummarizer(),
             # "llama": LLamaSummarizer()
         }
         logger.info(f"Initialized summarizer")
@@ -66,7 +66,9 @@ class Summarizer:
         max_length: int = 150,
     ) -> str:
         """Generate summary from PDF file content based on specified summary type"""
-        logger.info(f"Generating {summary_type} summary for PDF with {model_name} model")
+        logger.info(
+            f"Generating {summary_type} summary for PDF with {model_name} model"
+        )
 
         text = extract_text_from_pdf(file_content=file_bytes)
 
