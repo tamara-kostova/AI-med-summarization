@@ -34,7 +34,7 @@ class Summarizer:
             "bart": BartSummarizer(),
             "distilbart": DistilBARTSummarizer(),
             "prophetnet": ProphetNetSummarizer(),
-            # "llama": LLamaSummarizer()
+            "llama": LLamaSummarizer()
         }
         logger.info(f"Initialized summarizer")
 

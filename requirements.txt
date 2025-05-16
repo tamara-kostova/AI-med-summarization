@@ -19,3 +19,4 @@ isort
 bert-extractive-summarizer
 peft
 bitsandbytes
+requests

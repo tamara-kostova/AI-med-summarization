@@ -301,14 +301,14 @@ def train_distilbart(
     os.makedirs(model_output_dir, exist_ok=True)
 
     dataset = load_dataset(
-        "cnn_dailymail",
-        "3.0.0",
-        split=["train[:2000]", "validation[:200]"],
+        "scientific_papers",
+        "pubmed",
+        split=["train[:5000]", "validation[:500]"],
         trust_remote_code=True,
         cache_dir="./data",
         download_mode="reuse_dataset_if_exists",
         storage_options={
-            "client_kwargs": {"timeout": aiohttp.ClientTimeout(total=1800)}
+            "client_kwargs": {"timeout": aiohttp.ClientTimeout(total=3600)}
         },
     )
     train_dataset, eval_dataset = dataset
@@ -317,15 +317,12 @@ def train_distilbart(
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
     def preprocess_data(examples):
-        inputs = examples["article"]
+        inputs = ["summarize: " + doc for doc in examples["article"]]
         model_inputs = tokenizer(
-            inputs, max_length=384, truncation=True, padding="max_length"
+            inputs, max_length=512, truncation=True, padding="max_length"
         )
         labels = tokenizer(
-            examples["highlights"],
-            max_length=128,
-            truncation=True,
-            padding="max_length",
+            examples["abstract"], max_length=128, truncation=True, padding="max_length"
         )
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
@@ -381,12 +378,15 @@ def train_prophetnet_small(
     os.makedirs(model_output_dir, exist_ok=True)
 
     dataset = load_dataset(
-        "cnn_dailymail",
-        "3.0.0",
+        "scientific_papers",
+        "pubmed",
         split=["train[:2000]", "validation[:200]"],
         trust_remote_code=True,
         cache_dir="./data",
         download_mode="reuse_dataset_if_exists",
+        storage_options={
+            "client_kwargs": {"timeout": aiohttp.ClientTimeout(total=3600)}
+        },
     )
     train_dataset, eval_dataset = dataset
 
@@ -394,31 +394,24 @@ def train_prophetnet_small(
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
     def preprocess_data(examples):
-        inputs = examples["article"]
+        inputs = ["summarize: " + doc for doc in examples["article"]]
         model_inputs = tokenizer(
-            inputs, max_length=384, truncation=True, padding="max_length"
+            inputs, max_length=512, truncation=True, padding="max_length"
         )
-
         labels = tokenizer(
-            examples["highlights"],
-            max_length=128,
-            truncation=True,
-            padding="max_length",
+            examples["abstract"], max_length=128, truncation=True, padding="max_length"
         )
-
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
 
     tokenized_train = train_dataset.map(
         preprocess_data,
         batched=True,
-        remove_columns=train_dataset.column_names,
     )
 
     tokenized_val = eval_dataset.map(
         preprocess_data,
         batched=True,
-        remove_columns=eval_dataset.column_names,
     )
 
     training_args = TrainingArguments(
