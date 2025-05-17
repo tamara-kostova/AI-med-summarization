@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
@@ -32,10 +33,13 @@ async def get_home(request: Request):
     description="Extracts text from a PDF file and generates a summary using either abstractive or extractive methods.",
 )
 async def summarize_pdf(
-    summarizer: Summarizer = Depends(get_summarizer),
+    evaluator: Evaluator = Depends(get_evaluator),
     file: UploadFile = File(...),
     summary_type: str = Form(default="abstractive"),
     model: str = Form(default="t5-small"),
+    compare_enabled: bool = Form(default=False),
+    model2: Optional[str] = Form(default=None),
+    reference_summary: Optional[str] = Form(default=None),
 ):
     """
     Generate a summary from PDF content
@@ -50,16 +54,13 @@ async def summarize_pdf(
 
     try:
         file_bytes = await file.read()
-        summary = summarizer.generate_pdf_summary(file_bytes, summary_type, model)
-
-        text = extract_text_from_pdf(file_bytes)
-
-        return SummaryResponse(
-            summary=summary,
+        return evaluator.pdf_summary(
+            file_bytes=file_bytes,
             summary_type=summary_type,
-            original_length=len(text),
-            summary_length=len(summary),
-            filename=file.filename,
+            model=model,
+            compare_enabled=compare_enabled,
+            model2=model2,
+            reference_summary=reference_summary,
         )
     except Exception as e:
         logger.error(f"Error processing PDF: {str(e)}")
@@ -133,7 +134,7 @@ async def evaluate_summaries(
     """
     try:
         logger.info("Comparing summary methods")
-        results = evaluator.compare_summaries(
+        results = evaluator.generate_and_compare_summaries(
             request.text,
             request.reference_summary,
             extractive_model=request.extractive_model,

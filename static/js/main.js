@@ -134,6 +134,16 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('summary_type', summaryType);
             formData.append('model', model);
             formData.append('max_length', maxLength);
+
+            const compareEnabled = document.getElementById('compare-toggle').checked;
+            const model2 = compareEnabled ? document.getElementById('model2').value : null;
+            const reference_summary = compareEnabled ? document.getElementById('reference-summary-file').value : null
+
+            formData.append('compare_enabled', compareEnabled);
+            if(compareEnabled) {
+                formData.append('model2', model2);
+                formData.append('reference_summary',reference_summary)
+            }
             
             showSpinner();
             
@@ -158,6 +168,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('file-summary').textContent = data.summary;
                 
                 document.getElementById('file-results').style.display = 'block';
+
+                if (data.comparison) {
+                    document.getElementById('comparison-results').style.display = 'block';
+                    
+                    // Model names
+                    document.getElementById('model1-name').textContent = data.comparison.model1;
+                    document.getElementById('model2-name').textContent = data.comparison.model2;
+                    
+                    // Summaries
+                    document.getElementById('summary1').textContent = data.summary;
+                    document.getElementById('summary2').textContent = data.comparison.summary2;
+                    
+                    // Scores visualization
+                    const scores = data.comparison.rouge_scores;
+                    const scoresDiv = document.querySelector('#comparison-results .rouge-scores');
+                    scoresDiv.innerHTML = `
+                        <h4>Evaluation Scores</h4>
+                        <div class="score-grid">
+                            <div class="score-header"></div>
+                            <div class="score-header">ROUGE-1</div>
+                            <div class="score-header">ROUGE-2</div>
+                            <div class="score-header">ROUGE-L</div>
+                            
+                            <div class="model-name">${data.comparison.model1}</div>
+                            <div class="score-value">${(scores.model1_rouge.rouge1 * 100).toFixed(1)}%</div>
+                            <div class="score-value">${(scores.model1_rouge.rouge2 * 100).toFixed(1)}%</div>
+                            <div class="score-value">${(scores.model1_rouge.rougeL * 100).toFixed(1)}%</div>
+                            
+                            <div class="model-name">${data.comparison.model2}</div>
+                            <div class="score-value">${(scores.model2_rouge.rouge1 * 100).toFixed(1)}%</div>
+                            <div class="score-value">${(scores.model2_rouge.rouge2 * 100).toFixed(1)}%</div>
+                            <div class="score-value">${(scores.model2_rouge.rougeL * 100).toFixed(1)}%</div>
+                            
+                            <div class="recommendation-row">
+                                <div colspan="4" style="padding: 1rem; text-align: center;">
+                                    Recommended Model: <strong>${scores.recommended_method.replace('Model 1', data.comparison.model1).replace('Model 2', data.comparison.model2)}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+  
                 
             } catch (error) {
                 alert(`Error: ${error.message}`);
@@ -251,4 +303,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideSpinner() {
         document.getElementById('spinner').style.display = 'none';
     }
+
+    const compareToggle = document.getElementById('compare-toggle');
+    const secondModelGroup = document.getElementById('second-model-group');
+
+    compareToggle.addEventListener('change', (e) => {
+    secondModelGroup.style.display = e.target.checked ? 'block' : 'none';
+    });
+
 });

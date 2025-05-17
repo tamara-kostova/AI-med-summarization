@@ -28,7 +28,21 @@
             <input type="number" id="max_length" name="max_length" min="50" max="1000" value="150">
         </div>
         
-        <button type="submit">Generate Summary</button>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="compare-toggle">
+                Compare with another model
+              </label>
+              <div id="second-model-group" style="display: none;">
+                <label for="model2">Comparison Model:</label>
+                <select id="model2" name="model2">
+                  <!-- model options here -->
+                </select>
+              </div>              
+          </div>
+          <div>        
+                <button type="submit">Generate Summary</button>
+          </div>
     </form>
     
     <div id="spinner" class="spinner"></div>
@@ -39,6 +53,23 @@
         <p><strong>Original Length:</strong> <span id="originalLength"></span> characters</p>
         <p><strong>Summary Length:</strong> <span id="summaryLength"></span> characters</p>
         <div id="summary"></div>
+    </div>
+
+    <div id="comparison-results" style="display: none;">
+        <h3>Model Comparison</h3>
+        <div class="comparison-grid">
+          <div class="comparison-col">
+            <h4>Primary Model (<span id="model1-name"></span>)</h4>
+            <div id="summary1" class="summary-box"></div>
+          </div>
+          <div class="comparison-col">
+            <h4>Comparison Model (<span id="model2-name"></span>)</h4>
+            <div id="summary2" class="summary-box"></div>
+          </div>
+        </div>
+        <div class="rouge-scores">
+          <h4>Evaluation Scores</h4>
+        </div>
     </div>
     
     <script src="{{ url_for('static', path='/js/upload.js') }}"></script>

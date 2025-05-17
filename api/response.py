@@ -57,3 +57,15 @@ class SummaryComparisonResponse(BaseModel):
         description="Recommended summarization method based on ROUGE scores",
         example="abstractive",
     )
+
+
+class ComparisonResponse(SummaryResponse):
+    comparison: Optional[Dict] = Field(
+        default=None,
+        description="Comparison data when using multiple models",
+        example={
+            "model2": "bert-large",
+            "summary2": "Alternative summary text...",
+            "scores": {"rouge1": 0.85, "rouge2": 0.76},
+        },
+    )

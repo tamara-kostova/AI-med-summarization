@@ -301,9 +301,7 @@ def train_distilbart(
     os.makedirs(model_output_dir, exist_ok=True)
 
     dataset = load_dataset(
-        "scientific_papers",
-        "pubmed",
-        split=["train[:5000]", "validation[:500]"]
+        "scientific_papers", "pubmed", split=["train[:5000]", "validation[:500]"]
     )
     train_dataset, eval_dataset = dataset
 

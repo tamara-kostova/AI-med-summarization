@@ -21,8 +21,8 @@ class LLamaSummarizer(AbstractiveSummarizer):
             headers = {"Content-Type": "application/json"}
             message = {
                 "role": "user",
-                "content": f"<|system|>You’re an expert medical summarizer.<!|user|>Summarizer the following text: {text}"
-                }
+                "content": f"<|system|>You’re an expert medical summarizer.<!|user|>Summarizer the following text: {text}",
+            }
             data = {
                 "model": self.model,
                 "messages": [message],

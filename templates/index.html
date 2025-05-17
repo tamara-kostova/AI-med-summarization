@@ -45,6 +45,8 @@
                                 <option value="distilbart">DistilBART</option>
                                 <option value="prophetnet">ProphetNet</option>
                                 <option value="llama">LLAMA</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="mistral">Mistral</option>
                             </optgroup>
                             <optgroup label="Extractive">
                                 <option value="bert">BERT</option>
@@ -106,6 +108,8 @@
                                 <option value="distilbart">DistilBART</option>
                                 <option value="prophetnet">ProphetNet</option>
                                 <option value="llama">LLAMA</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="mistral">Mistral</option>
                             </optgroup>
                             <optgroup label="Extractive">
                                 <option value="bert">BERT</option>
@@ -122,6 +126,37 @@
                         <input type="number" id="max_length_file" name="max_length" min="50" max="1000" value="150">
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="compare-toggle">
+                        Compare with another model
+                      </label>
+                      <div id="second-model-group" style="display: none;">
+                        <label for="model2">Comparison Model:</label>
+                        <select id="model2" name="model2">
+                            <optgroup label="Abstractive">
+                                <option value="t5-small">T5-SMALL</option>
+                                <option value="bart">BART</option>
+                                <option value="distilbart">DistilBART</option>
+                                <option value="prophetnet">ProphetNet</option>
+                                <option value="llama">LLAMA</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="mistral">Mistral</option>
+                            </optgroup>
+                            <optgroup label="Extractive">
+                                <option value="bert">BERT</option>
+                                <option value="textrank">TextRank</option>
+                                <option value="lexrank">LexRank</option>
+                                <option value="summarunner">SummaRuNNer</option>
+                                <option value="lsa">LSA</option>
+                            </optgroup>
+                        </select>
+                        <div class="form-group">
+                            <label for="reference-summary-file">Reference Summary (Ground Truth):</label>
+                            <textarea id="reference-summary-file" name="reference_summary_file" rows="5" placeholder="Enter a reference summary for comparison" required></textarea>
+                        </div>
+                      </div>              
+                  </div>
                 
                 <button type="submit" class="primary-button">Generate Summary</button>
             </form>
@@ -137,6 +172,22 @@
                 <div class="summary-content">
                     <h4>Summary:</h4>
                     <div id="file-summary" class="summary-box"></div>
+                </div>
+            </div>
+            <div id="comparison-results" style="display: none;">
+                <h3>Model Comparison</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-col">
+                        <h4>Primary Model (<span id="model1-name"></span>)</h4>
+                        <div id="summary1" class="summary-box"></div>
+                    </div>
+                    <div class="comparison-col">
+                        <h4>Comparison Model (<span id="model2-name"></span>)</h4>
+                        <div id="summary2" class="summary-box"></div>
+                    </div>
+                </div>
+                <div class="rouge-scores">
+                    <!-- Scores and recommendation will be inserted here -->
                 </div>
             </div>
         </section>
@@ -175,6 +226,8 @@
                             <option value="distilbart">DistilBART</option>
                             <option value="prophetnet">ProphetNet</option>
                             <option value="llama">LLAMA</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="mistral">Mistral</option>
                         </select>
                     </div>
                 </div>

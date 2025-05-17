@@ -19,13 +19,13 @@ class DeepSeekSummarizer(AbstractiveSummarizer):
     def generate_abstractive_summary(self, text: str) -> str:
         try:
             headers = {"Content-Type": "application/json"}
-            message = {
-                "role": "user",
-                "content": f"<|system|>You’re an expert medical summarizer.<!|user|>Summarizer the following text: {text}"
-                }
+            messages = [
+                {"role": "system", "content": "You're an expert medical summarizer."},
+                {"role": "user", "content": f"Summarize this medical text: {text}"},
+            ]
             data = {
                 "model": self.model,
-                "messages": [message],
+                "messages": [messages],
                 "temperature": 0.5,
                 "max_tokens": 150,
             }
@@ -33,12 +33,16 @@ class DeepSeekSummarizer(AbstractiveSummarizer):
 
             if response.status_code == 200:
                 content = response.json()
-                content = content["choices"][0]
-                message = content["message"]["content"]
-                return message
+                if "choices" in content and len(content["choices"]) > 0:
+                    return content["choices"][0]["message"]["content"].strip()
+                else:
+                    logger.error("Empty response from DeepSeek API")
+                    return ""
             else:
-                logger.error(f"DeepSeek summarization error. Request failed. {response}")
-                return "UNKNOWN"
+                logger.error(
+                    f"DeepSeek summarization error. Request failed. {response.json()}"
+                )
+                return "DeepSeek Summary generation failed :()"
         except Exception as e:
             logger.error(f"DeepSeek summarization error: {e}")
             raise

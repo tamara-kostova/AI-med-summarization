@@ -1,8 +1,10 @@
 import logging
+from typing import Optional
 
 from rouge_score import rouge_scorer
 
 from summarization.summarizer import Summarizer
+from summarization.utils import extract_text_from_pdf
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,7 +21,7 @@ class Evaluator:
         """Evaluate a generated summary against a reference"""
         return self.scorer.score(reference, generated)
 
-    def compare_summaries(
+    def generate_and_compare_summaries(
         self,
         text: str,
         reference_summary: str,
@@ -63,3 +65,74 @@ class Evaluator:
             },
             "recommended_method": recommended,
         }
+
+    def compare_summaries(self, summary_1: str, summary_2: str, reference_summary: str):
+
+        scores1 = self.evaluate_summary(reference_summary, summary_1)
+        scores2 = self.evaluate_summary(reference_summary, summary_2)
+        rougeL_1 = scores1["rougeL"].fmeasure
+        rougeL_2 = scores2["rougeL"].fmeasure
+
+        if rougeL_1 > rougeL_2:
+            recommended = "Model 1"
+        elif rougeL_2 > rougeL_1:
+            recommended = "Model 2"
+        else:
+            recommended = "Either (Scores Equal)"
+
+        return {
+            "model1_rouge": {
+                "rouge1": scores1["rouge1"].fmeasure,
+                "rouge2": scores1["rouge2"].fmeasure,
+                "rougeL": scores1["rougeL"].fmeasure,
+            },
+            "model2_rouge": {
+                "rouge1": scores2["rouge1"].fmeasure,
+                "rouge2": scores2["rouge2"].fmeasure,
+                "rougeL": scores2["rougeL"].fmeasure,
+            },
+            "recommended_method": recommended,
+        }
+
+    def pdf_summary(
+        self,
+        file_bytes,
+        summary_type: str,
+        model: str,
+        compare_enabled,
+        model2: Optional[str],
+        reference_summary: Optional[str],
+    ):
+        summary1 = self.summarizer.generate_pdf_summary(file_bytes, summary_type, model)
+
+        text = extract_text_from_pdf(file_bytes)
+
+        result = {
+            "summary": summary1,
+            "summary_type": summary_type,
+            "original_length": len(text),
+            "summary_length": len(summary1),
+        }
+        if compare_enabled and model2:
+            summary2 = self.summarizer.generate_pdf_summary(
+                file_bytes, summary_type, model2
+            )
+
+            evaluation = self.compare_summaries(
+                reference_summary=reference_summary,
+                summary_1=summary1,
+                summary_2=summary2,
+            )
+
+            result.update(
+                {
+                    "comparison": {
+                        "model1": model,
+                        "model2": model2,
+                        "summary2": summary2,
+                        "rouge_scores": evaluation,
+                    }
+                }
+            )
+
+        return result
