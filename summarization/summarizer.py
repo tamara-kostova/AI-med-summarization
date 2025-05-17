@@ -2,8 +2,10 @@ import logging
 
 from summarization.abstractive.abstractive_summarizer import AbstractiveSummarizer
 from summarization.abstractive.bart import BartSummarizer
+from summarization.abstractive.deepseek import DeepSeekSummarizer
 from summarization.abstractive.distilbart import DistilBARTSummarizer
 from summarization.abstractive.llama import LLamaSummarizer
+from summarization.abstractive.mistral import MistralSummarizer
 from summarization.abstractive.prophetnet import ProphetNetSummarizer
 from summarization.abstractive.t5 import T5AbstractiveSummarizer
 from summarization.extractive.bert import BertSummarizer
@@ -34,7 +36,9 @@ class Summarizer:
             "bart": BartSummarizer(),
             "distilbart": DistilBARTSummarizer(),
             "prophetnet": ProphetNetSummarizer(),
-            "llama": LLamaSummarizer()
+            "llama": LLamaSummarizer(),
+            "mistral": MistralSummarizer(),
+            "deepseek": DeepSeekSummarizer(),
         }
         logger.info(f"Initialized summarizer")
 
