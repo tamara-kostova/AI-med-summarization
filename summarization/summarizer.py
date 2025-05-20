@@ -12,6 +12,7 @@ from summarization.extractive.bert import BertSummarizer
 from summarization.extractive.extractive_summarizer import ExtractiveSummarizer
 from summarization.extractive.lexrank import LexRankSummarizer
 from summarization.extractive.lsa import LSASummarizer
+from summarization.extractive.mk_roberta import MkRobertaSummarizer
 from summarization.extractive.sumarrnet import SummaRuNNerSummarizer
 from summarization.extractive.textrank import TextRankerSummarizer
 from summarization.utils import extract_text_from_pdf
@@ -28,6 +29,7 @@ class Summarizer:
             "lexrank": LexRankSummarizer(),
             "summarunner": SummaRuNNerSummarizer(),
             "lsa": LSASummarizer(),
+            "mkroberta": MkRobertaSummarizer()
         }
         self.abstractive_models = {
             "t5-small": T5AbstractiveSummarizer(
@@ -38,7 +40,7 @@ class Summarizer:
             "prophetnet": ProphetNetSummarizer(),
             "llama": LLamaSummarizer(),
             "mistral": MistralSummarizer(),
-            "deepseek": DeepSeekSummarizer(),
+            "deepseek": DeepSeekSummarizer()
         }
         logger.info(f"Initialized summarizer")
 
