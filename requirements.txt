@@ -20,3 +20,4 @@ bert-extractive-summarizer
 peft
 bitsandbytes
 requests
+groq

@@ -1,4 +1,5 @@
 import logging
+from groq import Groq
 
 from summarization.abstractive.abstractive_summarizer import AbstractiveSummarizer
 from summarization.abstractive.bart import BartSummarizer
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class Summarizer:
-    def __init__(self):
+    def __init__(self, groq_client: Groq):
         self.extractive_models = {
             "textrank": TextRankerSummarizer(),
             "bert": BertSummarizer(),
@@ -38,9 +39,9 @@ class Summarizer:
             "bart": BartSummarizer(),
             "distilbart": DistilBARTSummarizer(),
             "prophetnet": ProphetNetSummarizer(),
-            "llama": LLamaSummarizer(),
-            "mistral": MistralSummarizer(),
-            "deepseek": DeepSeekSummarizer()
+            "llama": LLamaSummarizer(groq_client=groq_client),
+            "mistral": MistralSummarizer(groq_client=groq_client),
+            "deepseek": DeepSeekSummarizer(groq_client=groq_client)
         }
         logger.info(f"Initialized summarizer")
 

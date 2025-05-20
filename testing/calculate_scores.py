@@ -1,5 +1,7 @@
 import os
 import csv
+from groq import Groq
+
 from tqdm import tqdm
 
 from summarization.summarizer import Summarizer
@@ -14,7 +16,7 @@ DATASET_ROOT = "testing/sumpubmed_dataset"
 TEXT_DIR = os.path.join(DATASET_ROOT, "text")
 ABSTRACT_DIR = os.path.join(DATASET_ROOT, "abstract")
 OUTPUT_CSV = "testing/sumpubmed_model_rouge_results.csv"
-AVERAGES_OUTPUT_CSV = "/sumpubmed_model_average_rouge_scores.csv"
+AVERAGES_OUTPUT_CSV = "testing/sumpubmed_model_average_rouge_scores.csv"
 
 
 def get_sample_ids(text_dir, abstract_dir, num_samples: int = 10):
@@ -44,11 +46,14 @@ def evaluate_models(num_samples: int = 10):
         "bart",
         "distilbart",
         "prophetnet",
-        # , "llama", "deepseek", "mistral"
+        "llama",
+        "deepseek",
+        "mistral",
     ]
     extractive_models = ["bert", "textrank", "lexrank", "summarunner", "lsa"]
 
-    summarizer = Summarizer()
+    groq_client = Groq(api_key="")
+    summarizer = Summarizer(groq_client=groq_client)
     evaluator = Evaluator(summarizer=summarizer)
 
     def read_file(path):
@@ -111,9 +116,7 @@ def evaluate_models(num_samples: int = 10):
             except Exception as e:
                 logger.error(f"Extractive {model} on {idx}: {e}")
 
-    with open(
-        OUTPUT_CSV, "w", newline="", encoding="utf-8"
-    ) as f:
+    with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
             f,
             fieldnames=[
@@ -131,10 +134,8 @@ def evaluate_models(num_samples: int = 10):
         writer.writeheader()
         for row in results:
             writer.writerow(row)
-    
-    logger.info(
-        f"Evaluation complete. Results saved to {OUTPUT_CSV}"
-    )
+
+    logger.info(f"Evaluation complete. Results saved to {OUTPUT_CSV}")
 
     results_df = pd.DataFrame(results)
     average_scores = (

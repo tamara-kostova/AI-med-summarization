@@ -1,4 +1,5 @@
 import logging
+from groq import Groq
 
 import requests
 
@@ -10,13 +11,33 @@ logger = logging.getLogger(__name__)
 class LLamaSummarizer(AbstractiveSummarizer):
     def __init__(
         self,
-        model="llama-3.2-1b-instruct",
-        api_endpoint="http://192.168.100.66:1234/v1/chat/completions",
+        groq_client: Groq,
+        lm_studio_model="llama-3.2-1b-instruct",
+        groq_model="llama3-70b-8192",
+        lm_studio_endpoint="http://192.168.100.66:1234/v1/chat/completions",
     ):
-        self.model = model
-        self.api_endpoint = api_endpoint
+        self.groq_client = groq_client
+        self.model_llm_studio_modelm_studio = lm_studio_model
+        self.lm_studio_endpoint = lm_studio_endpoint
+        self.groq_model = groq_model
 
     def generate_abstractive_summary(self, text: str) -> str:
+        try:
+            chat_completion = self.groq_client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": "You’re an expert medical summarizer. Summarizer the following text:",
+                    }
+                ],
+                model=self.groq_model,
+            )
+            return chat_completion.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Llama summarization error: {e}")
+            raise
+
+    def generate_abstractive_summary_1(self, text: str) -> str:
         try:
             headers = {"Content-Type": "application/json"}
             message = {

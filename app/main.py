@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
+from groq import Groq
 
 from api.routes import router
 from config.settings import Settings
@@ -16,7 +17,8 @@ from summarization.summarizer import Summarizer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.summarizer = Summarizer()
+    app.state.groq_client = Groq(api_key="")
+    app.state.summarizer = Summarizer(groq_client=app.state.groq_client)
     app.state.evaluator = Evaluator(summarizer=app.state.summarizer)
     yield
 
