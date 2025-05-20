@@ -66,11 +66,9 @@ class MkRobertaSummarizer(ExtractiveSummarizer):
         embeddings = []
         
         for sentence in sentences:
-            # Skip empty sentences
             if not sentence.strip():
                 continue
                 
-            # Tokenize sentence
             inputs = self.tokenizer(
                 sentence, 
                 return_tensors="pt", 
@@ -78,12 +76,10 @@ class MkRobertaSummarizer(ExtractiveSummarizer):
                 truncation=True, 
                 max_length=512
             )
-            
-            # Get model output without calculating gradients
+
             with torch.no_grad():
                 outputs = self.model(**inputs)
-                
-            # Use mean pooling to get sentence embedding
+
             embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
             embeddings.append(embedding)
             
@@ -117,14 +113,12 @@ class MkRobertaSummarizer(ExtractiveSummarizer):
         if embeddings.shape[0] <= num_sentences_to_return:
             return list(range(embeddings.shape[0]))
         
-        # Apply medical weighting if enabled
         if self.use_medical_weighting:
             weights = np.array([self._medical_importance_score(s) for s in sentences])
             weighted_embeddings = embeddings * weights[:, np.newaxis]
         else:
             weighted_embeddings = embeddings
         
-        # Choose clustering algorithm
         if self.clustering_algorithm == "kmeans":
             clustering_model = KMeans(
                 n_clusters=num_sentences_to_return,
@@ -133,7 +127,6 @@ class MkRobertaSummarizer(ExtractiveSummarizer):
             clustering_model.fit(weighted_embeddings)
             centers = clustering_model.cluster_centers_
             
-            # Find closest sentences to each cluster center
             closest_indices = []
             for center in centers:
                 distances = np.sqrt(((weighted_embeddings - center) ** 2).sum(axis=1))
@@ -159,7 +152,6 @@ class MkRobertaSummarizer(ExtractiveSummarizer):
             if len(sentences) <= 3:
                 return text
                 
-            # Get sentence embeddings
             embeddings = self._get_sentence_embeddings(sentences)
             if len(embeddings) == 0:
                 logger.warning("No valid sentences to embed")
