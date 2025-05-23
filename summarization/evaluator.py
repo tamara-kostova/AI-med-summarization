@@ -1,13 +1,15 @@
 import logging
 from typing import Optional
-
+from bert_score import score as bert_score
 from rouge_score import rouge_scorer
+
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 from summarization.summarizer import Summarizer
 from summarization.utils import extract_text_from_pdf
 
 logging.basicConfig(level=logging.INFO)
-
+logger = logging.getLogger(__name__)
 
 class Evaluator:
     def __init__(self, summarizer: Summarizer):
@@ -15,11 +17,54 @@ class Evaluator:
         self.scorer = rouge_scorer.RougeScorer(
             ["rouge1", "rouge2", "rougeL"], use_stemmer=True
         )
-        print(f"Initialized evaluator")
+        logger.info(f"Initialized evaluator")
 
     def evaluate_summary(self, reference: str, generated: str):
         """Evaluate a generated summary against a reference"""
-        return self.scorer.score(reference, generated)
+        rouge_scores = self.scorer.score(reference, generated)
+        bleu_scores = self.compute_bleu(reference, generated)
+        bertscore_scores = self.compute_bertscore(reference, generated)
+        return {
+            "rouge1": rouge_scores["rouge1"].fmeasure,
+            "rouge2": rouge_scores["rouge2"].fmeasure,
+            "rougeL": rouge_scores["rougeL"].fmeasure,
+            **bleu_scores,
+            **bertscore_scores,
+        }
+
+    def compute_bleu(self, reference: str, candidate: str):
+        reference_tokens = [reference.split()]
+        candidate_tokens = candidate.split()
+        smoothie = SmoothingFunction().method4
+        bleu1 = sentence_bleu(
+            reference_tokens,
+            candidate_tokens,
+            weights=(1, 0, 0, 0),
+            smoothing_function=smoothie,
+        )
+        bleu2 = sentence_bleu(
+            reference_tokens,
+            candidate_tokens,
+            weights=(0.5, 0.5, 0, 0),
+            smoothing_function=smoothie,
+        )
+        bleu4 = sentence_bleu(
+            reference_tokens,
+            candidate_tokens,
+            weights=(0.25, 0.25, 0.25, 0.25),
+            smoothing_function=smoothie,
+        )
+        return {"bleu1": bleu1, "bleu2": bleu2, "bleu4": bleu4}
+
+    def compute_bertscore(self, reference: str, candidate: str, lang: str = "en"):
+        P, R, F1 = bert_score(
+            [candidate], [reference], lang=lang, rescale_with_baseline=False
+        )
+        return {
+            "bertscore_precision": P[0].item(),
+            "bertscore_recall": R[0].item(),
+            "bertscore_f1": F1[0].item(),
+        }
 
     def generate_and_compare_summaries(
         self,
@@ -29,7 +74,7 @@ class Evaluator:
         abstractive_model: str = "t5-small",
     ):
         """Compare extractive and abstractive summaries using ROUGE"""
-        text = text[:2048]
+        # text = text[:2048]
 
         extractive_summary = self.summarizer.generate_summary(
             text, summary_type="extractive", model_name=extractive_model
@@ -42,8 +87,8 @@ class Evaluator:
         abstractive_scores = self.evaluate_summary(
             reference_summary, abstractive_summary
         )
-        extractive_rougeL = extractive_scores["rougeL"].fmeasure
-        abstractive_rougeL = abstractive_scores["rougeL"].fmeasure
+        extractive_rougeL = extractive_scores["rougeL"]
+        abstractive_rougeL = abstractive_scores["rougeL"]
 
         if abstractive_rougeL > extractive_rougeL:
             recommended = "Abstractive"
@@ -53,16 +98,8 @@ class Evaluator:
             recommended = "Either (Scores Equal)"
 
         return {
-            "extractive_rouge": {
-                "rouge1": extractive_scores["rouge1"].fmeasure,
-                "rouge2": extractive_scores["rouge2"].fmeasure,
-                "rougeL": extractive_scores["rougeL"].fmeasure,
-            },
-            "abstractive_rouge": {
-                "rouge1": abstractive_scores["rouge1"].fmeasure,
-                "rouge2": abstractive_scores["rouge2"].fmeasure,
-                "rougeL": abstractive_scores["rougeL"].fmeasure,
-            },
+            "extractive_scores": extractive_scores,
+            "abstractive_scores": abstractive_scores,
             "recommended_method": recommended,
         }
 
@@ -70,8 +107,8 @@ class Evaluator:
 
         scores1 = self.evaluate_summary(reference_summary, summary_1)
         scores2 = self.evaluate_summary(reference_summary, summary_2)
-        rougeL_1 = scores1["rougeL"].fmeasure
-        rougeL_2 = scores2["rougeL"].fmeasure
+        rougeL_1 = scores1["rougeL"]
+        rougeL_2 = scores2["rougeL"]
 
         if rougeL_1 > rougeL_2:
             recommended = "Model 1"
@@ -81,16 +118,8 @@ class Evaluator:
             recommended = "Either (Scores Equal)"
 
         return {
-            "model1_rouge": {
-                "rouge1": scores1["rouge1"].fmeasure,
-                "rouge2": scores1["rouge2"].fmeasure,
-                "rougeL": scores1["rougeL"].fmeasure,
-            },
-            "model2_rouge": {
-                "rouge1": scores2["rouge1"].fmeasure,
-                "rouge2": scores2["rouge2"].fmeasure,
-                "rougeL": scores2["rougeL"].fmeasure,
-            },
+            "model1_scores": scores1,
+            "model2_scores": scores2,
             "recommended_method": recommended,
         }
 
@@ -114,8 +143,9 @@ class Evaluator:
             "summary_length": len(summary1),
         }
         if compare_enabled and model2:
+            summary_type_model2 = self.summarizer.get_summary_type_from_model(model2)
             summary2 = self.summarizer.generate_pdf_summary(
-                file_bytes, summary_type, model2
+                file_bytes, summary_type_model2, model2
             )
 
             evaluation = self.compare_summaries(
@@ -130,9 +160,8 @@ class Evaluator:
                         "model1": model,
                         "model2": model2,
                         "summary2": summary2,
-                        "rouge_scores": evaluation,
+                        "scores": evaluation,
                     }
                 }
             )
-
         return result

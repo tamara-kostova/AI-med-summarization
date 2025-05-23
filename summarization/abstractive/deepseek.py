@@ -50,11 +50,14 @@ class DeepSeekSummarizer(AbstractiveSummarizer):
                 "temperature": 0.5,
                 "max_tokens": 150,
             }
-            response = requests.post(self.lm_studio_endpoint, headers=headers, json=data)
+            response = requests.post(
+                self.lm_studio_endpoint, headers=headers, json=data
+            )
 
             if response.status_code == 200:
                 content = response.json()
                 if "choices" in content and len(content["choices"]) > 0:
+                    logger.info(f"Successfully generated summary with model DeepSeek.")
                     return content["choices"][0]["message"]["content"].strip()
                 else:
                     logger.error("Empty response from DeepSeek API")

@@ -102,6 +102,7 @@ class ProphetNetSummarizer(AbstractiveSummarizer):
                 logger.error("Invalid summary format from model")
                 return "Summary generation failed"
 
+            logger.info(f"Successfully generated summary with model Prophetnet.")
             return summary[0]["summary_text"]
         except Exception as e:
             logger.error(f"ProphetNet summarization error: {e}")

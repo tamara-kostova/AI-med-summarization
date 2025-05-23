@@ -59,7 +59,7 @@ class DistilBARTSummarizer(AbstractiveSummarizer):
             "summarization", model=model_path, tokenizer=tokenizer, device=-1
         )
 
-    def generate_abstractive_summary(self, text: str, max_length: int = 150) -> str:
+    def generate_abstractive_summary(self, text: str, max_length: int = 300) -> str:
         """Generate an abstractive summary using the DistilBART model"""
         try:
             logger.info(f"Input text length: {len(text.split())} words")
@@ -129,8 +129,8 @@ class DistilBARTSummarizer(AbstractiveSummarizer):
             try:
                 summary = self._model(
                     chunk,
-                    max_length=100,
-                    min_length=20,
+                    max_length=150,
+                    min_length=30,
                     do_sample=False,
                     clean_up_tokenization_spaces=True,
                 )
@@ -150,11 +150,12 @@ class DistilBARTSummarizer(AbstractiveSummarizer):
             try:
                 final_summary = self._model(
                     combined,
-                    max_length=150,
+                    max_length=300,
                     min_length=50,
                     do_sample=False,
                     clean_up_tokenization_spaces=True,
                 )
+                logger.info(f"Successfully generated summary with model DistilBart.")
                 return final_summary[0]["summary_text"]
             except Exception as e:
                 logger.error(f"Error re-summarizing combined chunks: {e}")
@@ -164,4 +165,5 @@ class DistilBARTSummarizer(AbstractiveSummarizer):
                     )
                 return combined[:500] + "..."
 
+        logger.info(f"Successfully generated summary with model DistilBart.")
         return combined

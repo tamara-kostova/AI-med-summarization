@@ -35,6 +35,7 @@ class MistralSummarizer(AbstractiveSummarizer):
                 ],
                 model=self.groq_model,
             )
+            logger.info(f"Successfully generated summary with model Mistral.")
             return chat_completion.choices[0].message.content
         except Exception as e:
             logger.error(f"Mistral summarization error: {e}")

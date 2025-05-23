@@ -30,7 +30,7 @@ class Summarizer:
             "lexrank": LexRankSummarizer(),
             "summarunner": SummaRuNNerSummarizer(),
             "lsa": LSASummarizer(),
-            "mkroberta": MkRobertaSummarizer()
+            "mkroberta": MkRobertaSummarizer(),
         }
         self.abstractive_models = {
             "t5-small": T5AbstractiveSummarizer(
@@ -41,7 +41,7 @@ class Summarizer:
             "prophetnet": ProphetNetSummarizer(),
             "llama": LLamaSummarizer(groq_client=groq_client),
             "mistral": MistralSummarizer(groq_client=groq_client),
-            "deepseek": DeepSeekSummarizer(groq_client=groq_client)
+            "deepseek": DeepSeekSummarizer(groq_client=groq_client),
         }
         logger.info(f"Initialized summarizer")
 
@@ -92,3 +92,11 @@ class Summarizer:
             model_name
         )
         return abstractive_summarizer.generate_abstractive_summary(text=text)
+
+    def get_summary_type_from_model(self, model_name: str) -> str:
+        if model_name in self.abstractive_models.keys():
+            return "abstractive"
+        elif model_name in self.extractive_models.keys():
+            return "extractive"
+        else:
+            raise ValueError(f"Unknown model: {model_name}")

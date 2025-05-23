@@ -10,7 +10,6 @@ from api.request import SummaryComparisonRequest, TextSummaryRequest
 from api.response import SummaryResponse
 from summarization.evaluator import Evaluator
 from summarization.summarizer import Summarizer
-from summarization.utils import extract_text_from_pdf
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

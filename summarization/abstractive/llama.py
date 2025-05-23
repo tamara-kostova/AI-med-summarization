@@ -48,7 +48,7 @@ class LLamaSummarizer(AbstractiveSummarizer):
                 "model": self.model,
                 "messages": [message],
                 "temperature": 0.5,
-                "max_tokens": 150,
+                "max_tokens": 500,
             }
             response = requests.post(self.api_endpoint, headers=headers, json=data)
 
@@ -56,6 +56,7 @@ class LLamaSummarizer(AbstractiveSummarizer):
                 content = response.json()
                 content = content["choices"][0]
                 message = content["message"]["content"]
+                logger.info(f"Successfully generated summary with model Llama.")
                 return message
             else:
                 logger.error(f"Llama summarization error. Request failed. {response}")

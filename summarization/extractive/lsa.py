@@ -1,3 +1,4 @@
+import logging 
 import nltk
 import numpy as np
 from nltk.tokenize import sent_tokenize
@@ -8,9 +9,11 @@ from summarization.extractive.extractive_summarizer import ExtractiveSummarizer
 
 nltk.download("punkt")
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class LSASummarizer(ExtractiveSummarizer):
-    def __init__(self, num_sentences: int = 3):
+    def __init__(self, num_sentences: int = 5):
         self.num_sentences = num_sentences
 
     def generate_extractive_summary(self, text: str) -> str:
@@ -34,4 +37,5 @@ class LSASummarizer(ExtractiveSummarizer):
         ranked_sentence_indices.sort()
 
         summary = " ".join([sentences[i] for i in ranked_sentence_indices])
+        logger.info(f"Succesfully generated summary with model LSA")
         return summary

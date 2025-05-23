@@ -46,4 +46,5 @@ class TextRankerSummarizer:
             " ".join(summaries), num_sentences=5
         )
 
+        logger.info(f"Succesfully generated summary with model TextRank")
         return final_summary

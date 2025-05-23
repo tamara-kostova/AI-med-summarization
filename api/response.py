@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -35,6 +35,7 @@ class SummaryResponse(BaseModel):
         description="Time taken to generate the summary in seconds",
         example=1.25,
     )
+    comparison: Optional[Dict[str, Any]] = None
 
 
 class SummaryComparisonResponse(BaseModel):

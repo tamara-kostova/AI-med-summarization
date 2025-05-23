@@ -51,7 +51,7 @@ class BartSummarizer(AbstractiveSummarizer):
             "summarization", model=model_path, tokenizer=tokenizer, device=-1
         )
 
-    def generate_abstractive_summary(self, text: str, max_length: int = 150) -> str:
+    def generate_abstractive_summary(self, text: str, max_length: int = 300) -> str:
         try:
             logger.info(f"Input text length: {len(text.split())} words")
             if not text.strip():
@@ -100,7 +100,7 @@ class BartSummarizer(AbstractiveSummarizer):
             if not summary or not isinstance(summary, list):
                 logger.error("Invalid summary format from model")
                 return "Summary generation failed"
-
+            logger.info(f"Successfully generated summary with model Bart.")
             return summary[0]["summary_text"]
         except Exception as e:
             logger.error(f"BART summarization error: {e}")

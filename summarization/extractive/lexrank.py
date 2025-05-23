@@ -74,7 +74,11 @@ class LexRankSummarizer(ExtractiveSummarizer):
         return scores
 
     def generate_extractive_summary(
-        self, text: str, ratio: float = 0.2, min_length: int = 40, max_length: int = 600
+        self,
+        text: str,
+        ratio: float = 0.2,
+        min_length: int = 40,
+        max_length: int = 1500,
     ) -> str:
         """
         Generate an extractive summary for the given text.
@@ -129,5 +133,5 @@ class LexRankSummarizer(ExtractiveSummarizer):
 
             summary = " ".join(summary_sentences)
 
-        logger.info(f"Generated LexRank summary of {len(summary)} characters")
+        logger.info(f"Succesfully generated summary with model LexRank")
         return summary

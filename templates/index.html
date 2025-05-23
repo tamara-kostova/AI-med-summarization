@@ -189,7 +189,7 @@
                         <div id="summary2" class="summary-box"></div>
                     </div>
                 </div>
-                <div class="rouge-scores">
+                <div class="scores">
                     <!-- Scores and recommendation will be inserted here -->
                 </div>
             </div>
@@ -245,27 +245,41 @@
             </form>
             
             <div id="compare-results" class="results" style="display:none;">
+                
+            <div class="metric-scores">
                 <h3>Comparison Results</h3>
                 <div class="comparison-grid">
                     <div class="comparison-col">
                         <h4>Extractive Summary (<span id="extractive-model-used"></span>)</h4>
-                        <div class="rouge-scores">
-                            <h5>ROUGE Scores:</h5>
+                        <div class="scores">
+                            <h5>Scores:</h5>
                             <ul>
                                 <li>ROUGE-1: <span id="extractive-rouge1"></span></li>
                                 <li>ROUGE-2: <span id="extractive-rouge2"></span></li>
                                 <li>ROUGE-L: <span id="extractive-rougeL"></span></li>
+                                <li>BLEU-1: <span id="extractive-bleu1"></span></li>
+                                <li>BLEU-2: <span id="extractive-bleu2"></span></li>
+                                <li>BLEU-4: <span id="extractive-bleu4"></span></li>
+                                <li>Bert Score: <span id="extractive-bertscore_f1"></span></li>
+                                <li>Bert Score: <span id="extractive-bertscore_precision"></span></li>
+                                <li>Bert Score: <span id="extractive-bertscore_recall"></span></li>
                             </ul>
                         </div>
                     </div>
                     <div class="comparison-col">
-                        <h4>Abstractive Summary(<span id="abstractive-model-used"></span>)</h4>
-                        <div class="rouge-scores">
-                            <h5>ROUGE Scores:</h5>
+                        <h4>Abstractive Summary (<span id="abstractive-model-used"></span>)</h4>
+                        <div class="scores">
+                            <h5>Scores:</h5>
                             <ul>
                                 <li>ROUGE-1: <span id="abstractive-rouge1"></span></li>
                                 <li>ROUGE-2: <span id="abstractive-rouge2"></span></li>
                                 <li>ROUGE-L: <span id="abstractive-rougeL"></span></li>
+                                <li>BLEU-1: <span id="abstractive-bleu1"></span></li>
+                                <li>BLEU-2: <span id="abstractive-bleu2"></span></li>
+                                <li>BLEU-4: <span id="abstractive-bleu4"></span></li>
+                                <li>Bert Score: <span id="abstractive-bertscore_f1"></span></li>
+                                <li>Bert Score: <span id="abstractive-bertscore_precision"></span></li>
+                                <li>Bert Score: <span id="abstractive-bertscore_recall"></span></li>
                             </ul>
                         </div>
                     </div>
@@ -274,6 +288,7 @@
                     <h4>Recommendation:</h4>
                     <p>Based on ROUGE scores, the <strong><span id="recommended-method"></span></strong> method is recommended for this text.</p>
                 </div>
+            </div>
             </div>
         </section>
     </main>

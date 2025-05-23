@@ -47,7 +47,7 @@ class T5AbstractiveSummarizer(AbstractiveSummarizer):
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         return pipeline("summarization", model=model_name, tokenizer=tokenizer)
 
-    def generate_abstractive_summary_chunk(self, text: str, max_length=150):
+    def generate_abstractive_summary_chunk(self, text: str, max_length=300):
         """Generate abstractive summary using the latest fine-tuned model"""
         try:
             summarizer = self.load_abstractive_model()
@@ -103,8 +103,10 @@ class T5AbstractiveSummarizer(AbstractiveSummarizer):
                 combined = " ".join(chunk_summaries)
                 if len(combined.split()) > 300:
                     return self.generate_abstractive_summary_chunk(combined)
+                logger.info(f"Successfully generated summary with model T5.")
                 return combined
             else:
+                logger.info(f"Successfully generated summary with model T5.")
                 return self.generate_abstractive_summary_chunk(extractive)
 
         logger.info("Text is short; using 2-chunk abstractive summarization")
@@ -118,5 +120,7 @@ class T5AbstractiveSummarizer(AbstractiveSummarizer):
 
         combined = " ".join(chunk_summaries)
         if len(combined.split()) < 300:
+            logger.info(f"Successfully generated summary with model T5.")
             return combined
+        logger.info(f"Successfully generated summary with model T5.")
         return self.generate_abstractive_summary(combined)

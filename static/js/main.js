@@ -157,10 +157,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const errorData = await response.json();
                     throw new Error(errorData.detail || 'An error occurred during PDF summarization');
                 }
-                
+                console.log(response)
                 const data = await response.json();
                 
-                // Display results
                 document.getElementById('file-name').textContent = data.filename;
                 document.getElementById('file-method').textContent = data.summary_type;
                 document.getElementById('file-originalLength').textContent = data.original_length;
@@ -168,46 +167,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('file-summary').textContent = data.summary;
                 
                 document.getElementById('file-results').style.display = 'block';
-
+                console.log(data)
                 if (data.comparison) {
+                    console.log('Comparison data received:', data.comparison);
+                    
                     document.getElementById('comparison-results').style.display = 'block';
                     
-                    // Model names
                     document.getElementById('model1-name').textContent = data.comparison.model1;
                     document.getElementById('model2-name').textContent = data.comparison.model2;
                     
-                    // Summaries
                     document.getElementById('summary1').textContent = data.summary;
                     document.getElementById('summary2').textContent = data.comparison.summary2;
                     
+                    const comparisonScores = data.comparison.scores;
+                    console.log('Scores object:', comparisonScores);
+                    
+                    const model1Scores = comparisonScores.model1_scores;
+                    const model2Scores = comparisonScores.model2_scores;
+                    
                     // Scores visualization
-                    const scores = data.comparison.rouge_scores;
-                    const scoresDiv = document.querySelector('#comparison-results .rouge-scores');
+                    const scoresDiv = document.querySelector('#comparison-results .scores');
                     scoresDiv.innerHTML = `
-                        <h4>Evaluation Scores</h4>
-                        <div class="score-grid">
-                            <div class="score-header"></div>
-                            <div class="score-header">ROUGE-1</div>
-                            <div class="score-header">ROUGE-2</div>
-                            <div class="score-header">ROUGE-L</div>
-                            
-                            <div class="model-name">${data.comparison.model1}</div>
-                            <div class="score-value">${(scores.model1_rouge.rouge1 * 100).toFixed(1)}%</div>
-                            <div class="score-value">${(scores.model1_rouge.rouge2 * 100).toFixed(1)}%</div>
-                            <div class="score-value">${(scores.model1_rouge.rougeL * 100).toFixed(1)}%</div>
-                            
-                            <div class="model-name">${data.comparison.model2}</div>
-                            <div class="score-value">${(scores.model2_rouge.rouge1 * 100).toFixed(1)}%</div>
-                            <div class="score-value">${(scores.model2_rouge.rouge2 * 100).toFixed(1)}%</div>
-                            <div class="score-value">${(scores.model2_rouge.rougeL * 100).toFixed(1)}%</div>
-                            
-                            <div class="recommendation-row">
-                                <div colspan="4" style="padding: 1rem; text-align: center;">
-                                    Recommended Model: <strong>${scores.recommended_method.replace('Model 1', data.comparison.model1).replace('Model 2', data.comparison.model2)}</strong>
-                                </div>
-                            </div>
+                        <h3>Evaluation Scores</h3>
+                        <div class="table-responsive">
+                        <table>
+                        <thead>
+                            <tr>
+                            <th>Model</th>
+                            <th>ROUGE-1</th>
+                            <th>ROUGE-2</th>
+                            <th>ROUGE-L</th>
+                            <th>BLEU-1</th>
+                            <th>BLEU-2</th>
+                            <th>BLEU-4</th>
+                            <th>BERTScore-Precision</th>
+                            <th>BERTScore-Recall</th>
+                            <th>BERTScore-F1</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>${data.comparison.model1}</td>
+                            <td>${(model1Scores.rouge1 * 100).toFixed(1)}%</td>
+                            <td>${(model1Scores.rouge2 * 100).toFixed(1)}%</td>
+                            <td>${(model1Scores.rougeL * 100).toFixed(1)}%</td>
+                            <td>${(model1Scores.bleu1 * 100).toFixed(1)}%</td>
+                            <td>${(model1Scores.bleu2 * 100).toFixed(1)}%</td>
+                            <td>${(model1Scores.bleu4 * 100).toFixed(1)}%</td>
+                            <td>${(model1Scores.bertscore_precision * 100).toFixed(1)}%</td>
+                            <td>${(model1Scores.bertscore_recall * 100).toFixed(1)}%</td>
+                            <td>${(model1Scores.bertscore_f1 * 100).toFixed(1)}%</td>
+                            </tr>
+                            <tr>
+                            <td>${data.comparison.model2}</td>
+                            <td>${(model2Scores.rouge1 * 100).toFixed(1)}%</td>
+                            <td>${(model2Scores.rouge2 * 100).toFixed(1)}%</td>
+                            <td>${(model2Scores.rougeL * 100).toFixed(1)}%</td>
+                            <td>${(model2Scores.bleu1 * 100).toFixed(1)}%</td>
+                            <td>${(model2Scores.bleu2 * 100).toFixed(1)}%</td>
+                            <td>${(model2Scores.bleu4 * 100).toFixed(1)}%</td>
+                            <td>${(model2Scores.bertscore_precision * 100).toFixed(1)}%</td>
+                            <td>${(model2Scores.bertscore_recall * 100).toFixed(1)}%</td>
+                            <td>${(model2Scores.bertscore_f1 * 100).toFixed(1)}%</td>
+                            </tr>
+                        </tbody>
+                        </table>
+                        </div>
+                        <div class="recommendation">
+                            <h4>Recommendation:</h4>
+                            <p>Based on ROUGE-L scores, the recommended model is: <strong>${comparisonScores.recommended_method.replace('Model 1', data.comparison.model1).replace('Model 2', data.comparison.model2)}</strong></p>
                         </div>
                     `;
+                } else {
+                    console.log('No comparison data in response');
                 }
   
                 
@@ -271,13 +303,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
                 
                 // Display results
-                document.getElementById('extractive-rouge1').textContent = (data.extractive_rouge.rouge1 * 100).toFixed(1) + '%';
-                document.getElementById('extractive-rouge2').textContent = (data.extractive_rouge.rouge2 * 100).toFixed(1) + '%';
-                document.getElementById('extractive-rougeL').textContent = (data.extractive_rouge.rougeL * 100).toFixed(1) + '%';
+                document.getElementById('extractive-rouge1').textContent = (data.extractive_scores.rouge1 * 100).toFixed(1) + '%';
+                document.getElementById('extractive-rouge2').textContent = (data.extractive_scores.rouge2 * 100).toFixed(1) + '%';
+                document.getElementById('extractive-rougeL').textContent = (data.extractive_scores.rougeL * 100).toFixed(1) + '%';
+                document.getElementById('extractive-bleu1').textContent = (data.extractive_scores.bleu1 * 100).toFixed(1) + '%';
+                document.getElementById('extractive-bleu2').textContent = (data.extractive_scores.bleu2 * 100).toFixed(1) + '%';
+                document.getElementById('extractive-bleu4').textContent = (data.extractive_scores.bleu4 * 100).toFixed(1) + '%';
+                document.getElementById('extractive-bertscore_f1').textContent = (data.extractive_scores.bertscore_f1 * 100).toFixed(1) + '%';
+                document.getElementById('extractive-bertscore_precision').textContent = (data.extractive_scores.bertscore_precision * 100).toFixed(1) + '%';
+                document.getElementById('extractive-bertscore_recall').textContent = (data.extractive_scores.bertscore_recall * 100).toFixed(1) + '%';
                 
-                document.getElementById('abstractive-rouge1').textContent = (data.abstractive_rouge.rouge1 * 100).toFixed(1) + '%';
-                document.getElementById('abstractive-rouge2').textContent = (data.abstractive_rouge.rouge2 * 100).toFixed(1) + '%';
-                document.getElementById('abstractive-rougeL').textContent = (data.abstractive_rouge.rougeL * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-rouge1').textContent = (data.abstractive_scores.rouge1 * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-rouge2').textContent = (data.abstractive_scores.rouge2 * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-rougeL').textContent = (data.abstractive_scores.rougeL * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-bleu1').textContent = (data.abstractive_scores.bleu1 * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-bleu2').textContent = (data.abstractive_scores.bleu2 * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-bleu4').textContent = (data.abstractive_scores.bleu4 * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-bertscore_f1').textContent = (data.abstractive_scores.bertscore_f1 * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-bertscore_precision').textContent = (data.abstractive_scores.bertscore_precision * 100).toFixed(1) + '%';
+                document.getElementById('abstractive-bertscore_recall').textContent = (data.abstractive_scores.bertscore_recall * 100).toFixed(1) + '%';
 
                 document.getElementById('extractive-model-used').textContent = requestData.extractive_model;
                 document.getElementById('abstractive-model-used').textContent = requestData.abstractive_model;

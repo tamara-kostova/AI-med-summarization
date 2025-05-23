@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 DATASET_ROOT = "testing/sumpubmed_dataset"
 TEXT_DIR = os.path.join(DATASET_ROOT, "text")
 ABSTRACT_DIR = os.path.join(DATASET_ROOT, "abstract")
-OUTPUT_CSV = "testing/sumpubmed_model_rouge_results.csv"
-AVERAGES_OUTPUT_CSV = "testing/sumpubmed_model_average_rouge_scores.csv"
+OUTPUT_CSV = "testing/sumpubmed_model_all_results.csv"
+AVERAGES_OUTPUT_CSV = "testing/sumpubmed_model_average_all_scores.csv"
 
 
 def get_sample_ids(text_dir, abstract_dir, num_samples: int = 10):
@@ -52,7 +52,9 @@ def evaluate_models(num_samples: int = 10):
     ]
     extractive_models = ["bert", "textrank", "lexrank", "summarunner", "lsa"]
 
-    groq_client = Groq(api_key="")
+    groq_client = Groq(
+        api_key=""
+    )
     summarizer = Summarizer(groq_client=groq_client)
     evaluator = Evaluator(summarizer=summarizer)
 
@@ -78,14 +80,21 @@ def evaluate_models(num_samples: int = 10):
                     text, summary_type="abstractive", model_name=model, max_length=150
                 )
                 scores = evaluator.evaluate_summary(reference, summary)
+                print(scores)
                 results.append(
                     {
                         "sample_id": idx,
                         "model": model,
                         "type": "abstractive",
-                        "rouge1": scores["rouge1"].fmeasure,
-                        "rouge2": scores["rouge2"].fmeasure,
-                        "rougeL": scores["rougeL"].fmeasure,
+                        "rouge1": scores["rouge1"],
+                        "rouge2": scores["rouge2"],
+                        "rougeL": scores["rougeL"],
+                        "bleu1": scores["bleu1"],
+                        "bleu2": scores["bleu2"],
+                        "bleu4": scores["bleu4"],
+                        "bertscore_precision": scores["bertscore_precision"],
+                        "bertscore_recall": scores["bertscore_recall"],
+                        "bertscore_f1": scores["bertscore_f1"],
                         "paper_length": len(text),
                         "summary_length": len(summary),
                         "reference_length": len(reference),
@@ -100,14 +109,21 @@ def evaluate_models(num_samples: int = 10):
                     text, summary_type="extractive", model_name=model, max_length=150
                 )
                 scores = evaluator.evaluate_summary(reference, summary)
+                print(scores)
                 results.append(
                     {
                         "sample_id": idx,
                         "model": model,
                         "type": "extractive",
-                        "rouge1": scores["rouge1"].fmeasure,
-                        "rouge2": scores["rouge2"].fmeasure,
-                        "rougeL": scores["rougeL"].fmeasure,
+                        "rouge1": scores["rouge1"],
+                        "rouge2": scores["rouge2"],
+                        "rougeL": scores["rougeL"],
+                        "bleu1": scores["bleu1"],
+                        "bleu2": scores["bleu2"],
+                        "bleu4": scores["bleu4"],
+                        "bertscore_precision": scores["bertscore_precision"],
+                        "bertscore_recall": scores["bertscore_recall"],
+                        "bertscore_f1": scores["bertscore_f1"],
                         "paper_length": len(text),
                         "summary_length": len(summary),
                         "reference_length": len(reference),
@@ -126,6 +142,12 @@ def evaluate_models(num_samples: int = 10):
                 "rouge1",
                 "rouge2",
                 "rougeL",
+                "bleu1",
+                "bleu2",
+                "bleu4",
+                "bertscore_precision",
+                "bertscore_recall",
+                "bertscore_f1",
                 "paper_length",
                 "summary_length",
                 "reference_length",
@@ -145,6 +167,12 @@ def evaluate_models(num_samples: int = 10):
                 "rouge1": "mean",
                 "rouge2": "mean",
                 "rougeL": "mean",
+                "bleu1": "mean",
+                "bleu2": "mean",
+                "bleu4": "mean",
+                "bertscore_precision": "mean",
+                "bertscore_recall": "mean",
+                "bertscore_f1": "mean",
                 "paper_length": "mean",
                 "summary_length": "mean",
                 "reference_length": "mean",
@@ -158,6 +186,12 @@ def evaluate_models(num_samples: int = 10):
             "rouge1": "avg_rouge1",
             "rouge2": "avg_rouge2",
             "rougeL": "avg_rougeL",
+            "bleu1": "avg_bleu1",
+            "bleu2": "avg_bleu2",
+            "bleu4": "avg_bleu4",
+            "bertscore_precision": "avg_bertscore_precision",
+            "bertscore_recal": "avg_bertscore_recal",
+            "bertscore_f1": "avg_bertscore_f1",
             "paper_length": "avg_paper_length",
             "summary_length": "avg_summary_length",
             "reference_length": "avg_reference_length",
