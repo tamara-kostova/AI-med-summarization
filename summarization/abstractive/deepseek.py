@@ -27,7 +27,7 @@ class DeepSeekSummarizer(AbstractiveSummarizer):
                 messages=[
                     {
                         "role": "user",
-                        "content": "You’re an expert medical summarizer. Summarizer the following text:",
+                        "content": f"You’re an expert medical summarizer. Summarizer the following text: {text}",
                     }
                 ],
                 model=self.groq_model,
