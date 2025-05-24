@@ -22,3 +22,4 @@ bitsandbytes
 requests
 groq
 bert-score
+tiktoken

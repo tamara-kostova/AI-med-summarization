@@ -4,7 +4,7 @@ from groq import Groq
 import requests
 
 from summarization.abstractive.abstractive_summarizer import AbstractiveSummarizer
-from summarization.utils import split_text_into_chunks
+from summarization.utils import split_text_into_chunks, truncate_to_6000_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class MistralSummarizer(AbstractiveSummarizer):
                 messages=[
                     {
                         "role": "user",
-                        "content": f"You’re an expert medical summarizer. Summarizer the following text:{text}",
+                        "content": truncate_to_6000_tokens(f"You’re an expert medical summarizer. Summarizer the following text:{text}"),
                     }
                 ],
                 model=self.groq_model,
