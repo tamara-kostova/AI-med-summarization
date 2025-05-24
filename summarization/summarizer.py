@@ -16,6 +16,7 @@ from summarization.extractive.lsa import LSASummarizer
 from summarization.extractive.mk_roberta import MkRobertaSummarizer
 from summarization.extractive.sumarrnet import SummaRuNNerSummarizer
 from summarization.extractive.textrank import TextRankerSummarizer
+from summarization.hybrid.hybrid_summarizer import HybridSummarizer
 from summarization.utils import extract_text_from_pdf
 
 logging.basicConfig(level=logging.INFO)
@@ -43,6 +44,9 @@ class Summarizer:
             "mistral": MistralSummarizer(groq_client=groq_client),
             "deepseek": DeepSeekSummarizer(groq_client=groq_client),
         }
+        self.hybrid_models = {
+            "hybrid": HybridSummarizer(text_ranker=self.extractive_models["textrank"], llama_summarizer=self.abstractive_models["llama"])
+        }
         logger.info(f"Initialized summarizer")
 
     def generate_summary(
@@ -60,10 +64,13 @@ class Summarizer:
                 model_name
             )
             return extractive_summarizer.generate_extractive_summary(text)
-        abstractive_summarizer: AbstractiveSummarizer = self.abstractive_models.get(
-            model_name
-        )
-        return abstractive_summarizer.generate_abstractive_summary(text=text)
+        elif summary_type.lower() == "abstractive":
+            abstractive_summarizer: AbstractiveSummarizer = self.abstractive_models.get(
+                model_name
+            )
+            return abstractive_summarizer.generate_abstractive_summary(text=text)
+        hybrid_summarizer: HybridSummarizer = self.hybrid_models.get(model_name)
+        return hybrid_summarizer.generate_summary(text=text)
 
     def generate_pdf_summary(
         self,
@@ -98,5 +105,7 @@ class Summarizer:
             return "abstractive"
         elif model_name in self.extractive_models.keys():
             return "extractive"
+        elif model_name in self.hybrid_models.keys():
+            return "hybrid"
         else:
             raise ValueError(f"Unknown model: {model_name}")

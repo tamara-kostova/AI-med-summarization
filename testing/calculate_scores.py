@@ -1,5 +1,6 @@
 import os
 import csv
+import time
 from groq import Groq
 
 from tqdm import tqdm
@@ -20,8 +21,10 @@ ABSTRACT_DIR = os.path.join(DATASET_ROOT, "abstract")
 OUTPUT_CSV = "testing/sumpubmed_model_all_results.csv"
 AVERAGES_OUTPUT_CSV = "testing/sumpubmed_model_average_all_scores.csv"
 CHECKPOINT_FILE = "testing/evaluation_checkpoint.json"
+HYBRID_CHECKPOINT_FILE = "testing/hybrid_evaluation_checkpoint.json"
 BATCH_SIZE = 10
-
+HYBRID_OUTPUT_CSV = "testing/hybrid_evaluation_results.csv"
+API_KEY = ""
 
 def get_sample_ids(text_dir, abstract_dir, num_samples: int = 10):
     text_files = set(
@@ -150,6 +153,10 @@ def calculate_and_save_averages(results, averages_output_file):
     logger.info(f"Averages saved to {averages_output_file}")
 
 
+def read_file(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read().strip()
+
 def evaluate_single_sample(
     idx,
     text_dir,
@@ -160,11 +167,6 @@ def evaluate_single_sample(
     extractive_models,
 ):
     """Evaluate a single sample with all models"""
-
-    def read_file(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read().strip()
-
     text_path = os.path.join(text_dir, f"text_{idx}.txt")
     abstract_path = os.path.join(abstract_dir, f"abst_{idx}.txt")
 
@@ -276,7 +278,7 @@ def evaluate_models(num_samples: int = 100, resume_from_checkpoint: bool = True)
     extractive_models = ["bert", "textrank", "lexrank", "summarunner", "lsa"]
 
     groq_client = Groq(
-        api_key=""
+        api_key=API_KEY
     )
     summarizer = Summarizer(groq_client=groq_client)
     evaluator = Evaluator(summarizer=summarizer)
@@ -307,7 +309,7 @@ def evaluate_models(num_samples: int = 100, resume_from_checkpoint: bool = True)
                     logger.info(f"Batch checkpoint: {batch_count} samples processed")
 
             except Exception as e:
-                logger.error(f"Rrror processing sample {idx}: {e}")
+                logger.error(f"Error processing sample {idx}: {e}")
                 continue
 
     except KeyboardInterrupt:
@@ -324,6 +326,67 @@ def evaluate_models(num_samples: int = 100, resume_from_checkpoint: bool = True)
         logger.info(f"Results saved to {OUTPUT_CSV}")
         logger.info(f"Averages saved to {AVERAGES_OUTPUT_CSV}")
 
+
+def evaluate_hybrid_model(num_samples: int = 100):
+    groq_client = Groq(
+        api_key=API_KEY
+    )
+    summarizer = Summarizer(groq_client=groq_client)
+    evaluator = Evaluator(summarizer=summarizer)
+
+    sample_ids = get_sample_ids(TEXT_DIR, ABSTRACT_DIR, num_samples)
+    results = []
+    processed_samples = set()
+    batch_count = 0
+    
+    for idx in sample_ids:
+        try:
+            text_path = os.path.join(TEXT_DIR, f"text_{idx}.txt")
+            abstract_path = os.path.join(ABSTRACT_DIR, f"abst_{idx}.txt")
+
+            text = read_file(text_path)
+            reference = read_file(abstract_path)
+
+            summary = summarizer.generate_summary(
+                text, summary_type="hybrid", model_name="hybrid", max_length=150
+            )
+            scores = evaluator.evaluate_summary(reference, summary)
+
+            results.append({
+                "sample_id": idx,
+                "model": "hybrid",
+                "type": "hybrid",
+                "rouge1": scores["rouge1"],
+                "rouge2": scores["rouge2"],
+                "rougeL": scores["rougeL"],
+                "bleu1": scores["bleu1"],
+                "bleu2": scores["bleu2"],
+                "bleu4": scores["bleu4"],
+                "bertscore_precision": scores["bertscore_precision"],
+                "bertscore_recall": scores["bertscore_recall"],
+                "bertscore_f1": scores["bertscore_f1"],
+                "paper_length": len(text),
+                "summary_length": len(summary),
+                "reference_length": len(reference),
+            })
+            logger.info(f"Processed sample {idx}. Scores: ROUGE1={scores["rouge1"]}")
+            batch_count += 1
+            processed_samples.add(idx)
+            time.sleep(10)
+            if batch_count % BATCH_SIZE == 0:
+                save_checkpoint(results, list(processed_samples), HYBRID_CHECKPOINT_FILE)
+                save_results_to_csv(results, HYBRID_OUTPUT_CSV)
+                logger.info(f"Batch checkpoint: {batch_count} samples processed")
+        
+        except Exception as e:
+            logger.error(f"Failed to process sample {idx}: {e}")
+
+    if results:
+        save_results_to_csv(results, HYBRID_OUTPUT_CSV)
+        logger.info(f"Hybrid model evaluation complete. Results saved to {HYBRID_OUTPUT_CSV}")
+    else:
+        logger.error("No results to save.")
+        
 
 if __name__ == "__main__":
     evaluate_models(num_samples=100, resume_from_checkpoint=True)
