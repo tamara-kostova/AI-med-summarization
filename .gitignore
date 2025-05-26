@@ -167,3 +167,4 @@ data/
 model_checkpoints_prophetnet
 testing/sumpubmed_dataset
 *.csv
+*.json

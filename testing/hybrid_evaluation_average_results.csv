@@ -1,0 +1,2 @@
+model,avg_rouge1,avg_rouge2,avg_rougeL,avg_bleu1,avg_bleu2,avg_bleu4,avg_bertscore_precision,avg_bertscore_recall,avg_bertscore_f1,avg_paper_length,avg_summary_length,avg_reference_length
+hybrid,0.508053398,0.168586815,0.214789955,0.300873532,0.154098076,0.051523059,0.844148759,0.847575241,0.848112556,27392.64,2124.55,1564.38

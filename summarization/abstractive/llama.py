@@ -28,7 +28,7 @@ class LLamaSummarizer(AbstractiveSummarizer):
                 messages=[
                     {
                         "role": "user",
-                        "content": truncate_to_6000_tokens(f"You’re an expert medical summarizer. Summarizer the following text:{text}"),
+                        "content": truncate_to_6000_tokens(f"You’re an expert medical summarizer. Do not include any extra information in the output. Summarize the following text:{text}"),
                     }
                 ],
                 model=self.groq_model,
